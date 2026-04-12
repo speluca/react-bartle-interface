@@ -9,7 +9,8 @@ function App() {
   const [acertosSeguidos, setAcertosSeguidos] = useState(0);
   const [perfil, setPerfil] = useState("explorador");
   const [mensagem, setMensagem] = useState("");
-
+  const [botaoClicado, setBotaoClicado] = useState(null);
+  const [tipoResposta, setTipoResposta] = useState("");
   const perguntas = {
     facil: [
       { texto: "Quanto é 1 + 1?", opcoes: ["2", "3", "1", "4"], resposta: "2" },
@@ -65,26 +66,33 @@ function App() {
 
   function verificarResposta(opcao) {
 
-    if (opcao === perguntaAtual.resposta) {
-      setPontos(pontos + 1);
-      setAcertosSeguidos(acertosSeguidos + 1);
-      mostrarMensagem(gerarMensagem(true));
+  setBotaoClicado(opcao);
 
-      if (acertosSeguidos + 1 >= 2) {
-        if (nivel === "facil") setNivel("medio");
-        else if (nivel === "medio") setNivel("dificil");
-      }
+  if (opcao === perguntaAtual.resposta) {
+    setTipoResposta("acerto");
+    setPontos(pontos + 1);
+    setAcertosSeguidos(acertosSeguidos + 1);
+    mostrarMensagem(gerarMensagem(true));
 
-    } else {
-      setAcertosSeguidos(0);
-      mostrarMensagem(gerarMensagem(false));
-
-      if (nivel === "difícil") setNivel("médio");
-      else if (nivel === "medio") setNivel("fácil");
+    if (acertosSeguidos + 1 >= 2) {
+      if (nivel === "facil") setNivel("medio");
+      else if (nivel === "medio") setNivel("dificil");
     }
 
-    sortearPergunta();
+  } else {
+    setTipoResposta("erro");
+    setAcertosSeguidos(0);
+    mostrarMensagem(gerarMensagem(false));
+
+    if (nivel === "dificil") setNivel("medio");
+    else if (nivel === "medio") setNivel("facil");
   }
+
+  setTimeout(() => {
+    setBotaoClicado(null);
+    sortearPergunta();
+  }, 600);
+}
 
   useEffect(() => {
     sortearPergunta();
@@ -112,12 +120,23 @@ function App() {
 
       <h1>{perguntaAtual.texto}</h1>
 
-      {opcoesEmbaralhadas.map((opcao, index) => (
-        <button key={index} onClick={() => verificarResposta(opcao)}>
-          {opcao}
-        </button>
-      ))}
+        {opcoesEmbaralhadas.map((opcao, index) => (
+          <button
+            key={index}
+            onClick={() => verificarResposta(opcao)}
+            className={
+              botaoClicado === opcao
+                ? tipoResposta === "acerto"
+                  ? "botao acerto"
+                  : "botao erro"
+                : "botao"
+            }
+          >
+            {opcao}
+          </button>
+        ))}
     </div>
+    
   )
 }
 
