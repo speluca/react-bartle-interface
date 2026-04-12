@@ -48,13 +48,15 @@ function App() {
     }
     return acertou ? "Acertou!" : "Errou!";
   }
+    let timeoutId;
     function mostrarMensagem(texto) {
+      clearTimeout(timeoutId);
     setMensagem(texto);
 
-    setTimeout(() => {
+      timeoutId = setTimeout(() => {
       setMensagem("");
-    }, 1500); // 1.5 segundos
-    }
+    }, 1500);
+  }
   function sortearPergunta() {
     const lista = perguntas[nivel];
     const randomIndex = Math.floor(Math.random() * lista.length);
@@ -77,8 +79,8 @@ function App() {
       setAcertosSeguidos(0);
       mostrarMensagem(gerarMensagem(false));
 
-      if (nivel === "dificil") setNivel("medio");
-      else if (nivel === "medio") setNivel("facil");
+      if (nivel === "difícil") setNivel("médio");
+      else if (nivel === "medio") setNivel("fácil");
     }
 
     sortearPergunta();
@@ -90,8 +92,11 @@ function App() {
 
   return (
     <div>
-      <p>{mensagem}</p>
-      
+      {mensagem && (
+        <div className="feedback">
+          {mensagem}
+        </div>
+      )}      
       <h3>Nível: {nivel}</h3>
       <h2>Pontos: {pontos}</h2>
       <p>🔥 Streak: {acertosSeguidos}</p>
