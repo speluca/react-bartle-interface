@@ -14,7 +14,7 @@ function App() {
     facil: [
       { texto: "Quanto é 1 + 1?", opcoes: ["2", "3", "1", "4"], resposta: "2" },
       { texto: "Quanto é 5 - 2?", opcoes: ["3", "2", "4", "1"], resposta: "3" },
-      { texto: "Quanto é 10 / 2?", opcoes: ["5", "2", "10", "4"], resposta: "5" }
+      { texto: "Quanto é 10 / 2?", opcoes: ["5", "2", "8", "4"], resposta: "5" }
     ],
     medio: [
       { texto: "Quanto é 2 + 2?", opcoes: ["4", "5", "3", "6"], resposta: "4" },
