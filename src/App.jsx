@@ -48,7 +48,13 @@ function App() {
     }
     return acertou ? "Acertou!" : "Errou!";
   }
+    function mostrarMensagem(texto) {
+    setMensagem(texto);
 
+    setTimeout(() => {
+      setMensagem("");
+    }, 1500); // 1.5 segundos
+    }
   function sortearPergunta() {
     const lista = perguntas[nivel];
     const randomIndex = Math.floor(Math.random() * lista.length);
@@ -60,7 +66,7 @@ function App() {
     if (opcao === perguntaAtual.resposta) {
       setPontos(pontos + 1);
       setAcertosSeguidos(acertosSeguidos + 1);
-      setMensagem(gerarMensagem(true));
+      mostrarMensagem(gerarMensagem(true));
 
       if (acertosSeguidos + 1 >= 2) {
         if (nivel === "facil") setNivel("medio");
@@ -69,7 +75,7 @@ function App() {
 
     } else {
       setAcertosSeguidos(0);
-      setMensagem(gerarMensagem(false));
+      mostrarMensagem(gerarMensagem(false));
 
       if (nivel === "dificil") setNivel("medio");
       else if (nivel === "medio") setNivel("facil");
