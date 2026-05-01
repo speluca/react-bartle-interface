@@ -2,6 +2,8 @@ import { useState } from "react";
 import Hub from "./Hub";
 import Quiz from "./Quiz";
 import Explorador from "./Explorador";
+import Infinito from "./Infinito";
+import Construtor from "./Construtor";
 
 function App() {
 
@@ -18,7 +20,12 @@ function App() {
       {modo === "explorador" && (
         <Explorador voltar={() => setModo("hub")} />
       )}
-
+    {modo === "infinito" && (
+        <Infinito voltar={() => setModo("hub")} />
+      )}
+    {modo === "construtor" && (
+        <Construtor voltar={() => setModo("hub")} />
+      )}
     </div>
   );
 }

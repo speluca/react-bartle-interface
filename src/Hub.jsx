@@ -14,12 +14,16 @@ function Hub({ setModo }) {
           <h2>🏆 Desafiar</h2>
           <p>Teste seus conhecimentos</p>
         </div>
-
-        <div className="card">
-          <h2>⚔️ Competir</h2>
-          <p>Em breve...</p>
+        
+        <div className="card" onClick={() => setModo("infinito")}>
+          <h2>🧗 Subida Infinita</h2>
+          <p>Desafie-se em uma jornada sem fim</p>
         </div>
 
+        <div className="card" onClick={() => setModo("construtor")}>
+          <h2>🧩 Construtor de Frações</h2>
+          <p>Crie e combine frações para formar o alvo</p>
+        </div>
       </div>
     </div>
   );
