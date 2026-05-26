@@ -2,24 +2,25 @@ import { useState, useEffect } from "react";
 
 function Explorador({ voltar }) {
 
-  const [nivel, setNivel] = useState(1);
+  const [regiaoAtual, setRegiaoAtual] = useState(1);
+  const [desbloqueadas, setDesbloqueadas] = useState([1]);
+
   const [quantidade, setQuantidade] = useState(4);
   const [partes, setPartes] = useState(Array(4).fill(false));
   const [mensagem, setMensagem] = useState("");
-  const [regiaoAtual, setRegiaoAtual] = useState(1);
-  const [desbloqueadas, setDesbloqueadas] = useState([1]);
-  // controla quantidade por nível
+
+  // controla quantidade por região
   useEffect(() => {
 
     let qtd = 4;
 
-    if (nivel === 2) qtd = 6;
-    if (nivel === 3) qtd = 8;
+    if (regiaoAtual === 2) qtd = 6;
+    if (regiaoAtual === 3) qtd = 8;
 
     setQuantidade(qtd);
     setPartes(Array(qtd).fill(false));
 
-  }, [nivel]);
+  }, [regiaoAtual]);
 
   // lógica das frações
   useEffect(() => {
@@ -27,7 +28,7 @@ function Explorador({ voltar }) {
     const total = partes.length;
     const ativas = partes.filter(p => p).length;
 
-    // remove mensagem ao desmarcar tudo
+    // remove mensagem ao limpar tudo
     if (ativas === 0) {
       setMensagem("");
       return;
@@ -50,17 +51,30 @@ function Explorador({ voltar }) {
 
     setMensagem(texto);
 
-    // completou tudo
+    // completou região
     if (ativas === total) {
 
       setMensagem("Ruína restaurada! 🎉");
 
       setTimeout(() => {
 
-        if (nivel < 3) {
-          setNivel(n => n + 1);
+        if (regiaoAtual < 3) {
+
+          const proxima = regiaoAtual + 1;
+
+          setDesbloqueadas(prev => {
+            if (!prev.includes(proxima)) {
+              return [...prev, proxima];
+            }
+            return prev;
+          });
+
+          setRegiaoAtual(proxima);
+
         } else {
-          setMensagem("Você explorou todas as as Ruínas Matemáticas! 🏆");
+
+          setMensagem("Você restaurou todas as ruínas! 🏆");
+
         }
 
       }, 2000);
@@ -87,6 +101,7 @@ function Explorador({ voltar }) {
       }}
     >
 
+      {/* botão voltar */}
       <button
         onClick={voltar}
         style={{
@@ -101,16 +116,84 @@ function Explorador({ voltar }) {
         ⬅ Voltar
       </button>
 
-      <h2>🌎 Região {nivel}</h2>
-
+      {/* título */}
       <h1 style={{ fontSize: "3rem" }}>
         🧭 Ruínas Matemáticas
       </h1>
 
       <p style={{ opacity: 0.8 }}>
-        Explore os fragmentos antigos e descubra
-        as proporções escondidas.
+        Explore fragmentos antigos e descubra
+        proporções escondidas.
       </p>
+
+      {/* MAPA */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "20px",
+          marginTop: "30px",
+          marginBottom: "40px"
+        }}
+      >
+
+        {[1, 2, 3].map((regiao) => {
+
+          const desbloqueada = desbloqueadas.includes(regiao);
+          const ativa = regiaoAtual === regiao;
+
+          return (
+            <div
+              key={regiao}
+
+              onClick={() => {
+                if (desbloqueada) {
+                  setRegiaoAtual(regiao);
+                }
+              }}
+
+              style={{
+                width: "80px",
+                height: "80px",
+
+                borderRadius: "50%",
+
+                background: ativa
+                  ? "#22c55e"
+                  : desbloqueada
+                  ? "#3b82f6"
+                  : "#475569",
+
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+
+                cursor: desbloqueada
+                  ? "pointer"
+                  : "not-allowed",
+
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+
+                border: "3px solid white",
+
+                transition: "0.3s",
+
+                boxShadow: ativa
+                  ? "0 0 20px rgba(34,197,94,0.8)"
+                  : "none"
+              }}
+            >
+              {desbloqueada ? `🗺️ ${regiao}` : "🔒"}
+            </div>
+          );
+        })}
+
+      </div>
+
+      {/* região atual */}
+      <h2>🌎 Região {regiaoAtual}</h2>
 
       {/* GRID */}
       <div
@@ -143,6 +226,7 @@ function Explorador({ voltar }) {
 
           <div
             key={index}
+
             onClick={() => toggleParte(index)}
 
             style={{
@@ -177,6 +261,7 @@ function Explorador({ voltar }) {
 
       </div>
 
+      {/* mensagem */}
       <h2
         style={{
           minHeight: "40px",
