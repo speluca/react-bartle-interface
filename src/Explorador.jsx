@@ -15,45 +15,58 @@ function Explorador({ voltar }) {
   const [descobertas, setDescobertas] = useState([]);
   const [jogoFinalizado, setJogoFinalizado] = useState(false);
 
-  const historias = {
+    const historias = {
     1: {
-      titulo: "🌿 Floresta das Frações",
-      texto:
-        "Antigas pedras escondem segredos sobre partes de um todo."
+      titulo: "🌿 Floresta dos Bits",
+      texto: "Descubra como números são representados em binário."
     },
 
     2: {
-      titulo: "❄️ Cavernas Congeladas",
-      texto:
-        "Cristais antigos preservam proporções esquecidas."
+      titulo: "❄️ Cavernas dos Bytes",
+      texto: "Combine bits para formar valores maiores."
     },
 
     3: {
-      titulo: "🔥 Templo das Proporções",
-      texto:
-        "A última relíquia guarda o conhecimento final das frações."
+      titulo: "🔥 Templo da Conversão",
+      texto: "Domine a conversão entre binário e decimal."
     }
   };
 
   const missoes = {
-    1: "Descubra uma fração equivalente a 1/2",
-    2: "Ative exatamente metade dos blocos",
-    3: "Restaure toda a ruína"
+  1: "Forme o número 3",
+  2: "Forme o número 6",
+  3: "Forme o número 13"
+};
+  const objetivos = {
+    1: 3,
+    2: 6,
+    3: 13
+  };
+
+  const pesos = {
+    1: [2, 1],
+    2: [4, 2, 1],
+    3: [8, 4, 2, 1]
   };
 
   const nomesReliquias = {
-    1: "🌿 Fragmento da Floresta",
-    2: "❄️ Cristal Congelado",
-    3: "🔥 Chama Antiga"
-  };
+  1: "💾 Fragmento Binário",
+  2: "🖥️ Núcleo de Processamento",
+  3: "⚙️ Chave da Conversão"
+};
+  const reliquiasRaras = [
+  "💾 Disquete Antigo",
+  "🖥️ Núcleo de Processamento",
+  "📟 Terminal Perdido"
+];
 
   // quantidade de peças por região
   useEffect(() => {
 
-    let qtd = 4;
+        let qtd = 2;
 
-    if (regiaoAtual === 2) qtd = 6;
-    if (regiaoAtual === 3) qtd = 8;
+    if (regiaoAtual === 2) qtd = 3;
+    if (regiaoAtual === 3) qtd = 4;
 
     setQuantidade(qtd);
     setPartes(Array(qtd).fill(false));
@@ -63,103 +76,111 @@ function Explorador({ voltar }) {
   // lógica principal
   useEffect(() => {
 
-    const total = partes.length;
-    const ativas = partes.filter(p => p).length;
+  const binarioAtual = partes
+    .map(p => (p ? "1" : "0"))
+    .join("");
 
-    if (ativas === 0) {
-      setMensagem("");
-      return;
+  const decimalAtual = partes.reduce(
+    (soma, ativa, index) =>
+      ativa
+        ? soma + pesos[regiaoAtual][index]
+        : soma,
+    0
+  );
+
+  setMensagem(
+    `💻 ${binarioAtual}₂ = ${decimalAtual}`
+  );
+
+  if (decimalAtual === objetivos[regiaoAtual]) {
+
+    setMensagem(
+      `✅ Correto! ${binarioAtual}₂ = ${decimalAtual}`
+    );
+
+    if (
+      !descobertas.includes(
+        `${binarioAtual}₂ = ${decimalAtual}`
+      )
+    ) {
+      setDescobertas(prev => [
+        ...prev,
+        `${binarioAtual}₂ = ${decimalAtual}`
+      ]);
     }
 
-    let texto = `Você descobriu ${ativas}/${total}`;
+    if (!reliquias.includes(nomesReliquias[regiaoAtual])) {
 
-    // Descobertas matemáticas
+      setReliquias(prev => [
+        ...prev,
+        nomesReliquias[regiaoAtual]
+      ]);
 
-    if (ativas === 2 && total === 4) {
+    }
 
-      texto += " — equivalente a 1/2 ✨";
+    if (Math.random() < 0.5) {
 
-      if (!descobertas.includes("2/4 = 1/2")) {
-        setDescobertas(prev => [...prev, "2/4 = 1/2"]);
+  const reliquiasDisponiveis =
+    reliquiasRaras.filter(
+      r => !reliquias.includes(r)
+    );
+
+  if (reliquiasDisponiveis.length > 0) {
+
+    const bonus =
+      reliquiasDisponiveis[
+        Math.floor(
+          Math.random() *
+          reliquiasDisponiveis.length
+        )
+      ];
+
+    setReliquias(prev => [
+      ...prev,
+      bonus
+    ]);
+
+    setMensagem(
+      `🎁 Você encontrou uma relíquia rara: ${bonus}`
+    );
+
+  }
+
+}
+
+    setAnimandoMapa(true);
+
+    setTimeout(() => {
+
+      if (regiaoAtual < 3) {
+
+        const proxima = regiaoAtual + 1;
+
+        setDesbloqueadas(prev => {
+
+          if (!prev.includes(proxima)) {
+            return [...prev, proxima];
+          }
+
+          return prev;
+
+        });
+
+        setRegiaoAtual(proxima);
+
+      } else {
+
+        setJogoFinalizado(true);
+
       }
-    }
 
-    if (ativas === 3 && total === 6) {
+      setAnimandoMapa(false);
 
-      texto += " — equivalente a 1/2 ✨";
+    }, 2000);
+  }
 
-      if (!descobertas.includes("3/6 = 1/2")) {
-        setDescobertas(prev => [...prev, "3/6 = 1/2"]);
-      }
-    }
-
-    if (ativas === 4 && total === 8) {
-
-      texto += " — equivalente a 1/2 ✨";
-
-      if (!descobertas.includes("4/8 = 1/2")) {
-        setDescobertas(prev => [...prev, "4/8 = 1/2"]);
-      }
-    }
-
-    if (ativas === 2 && total === 8) {
-      texto += " — equivalente a 1/4 🌙";
-    }
-
-    if (ativas === 4 && total === 6) {
-      texto += " — equivalente a 2/3 🔥";
-    }
-
-    setMensagem(texto);
-
-    // região concluída
-    if (ativas === total) {
-
-      setMensagem("🏛️ Ruína restaurada!");
-
-      // ganha relíquia
-      if (!reliquias.includes(nomesReliquias[regiaoAtual])) {
-
-        setReliquias(prev => [
-          ...prev,
-          nomesReliquias[regiaoAtual]
-        ]);
-
-      }
-
-      setAnimandoMapa(true);
-
-      setTimeout(() => {
-
-        if (regiaoAtual < 3) {
-
-          const proxima = regiaoAtual + 1;
-
-          setDesbloqueadas(prev => {
-
-            if (!prev.includes(proxima)) {
-              return [...prev, proxima];
-            }
-
-            return prev;
-
-          });
-
-          setRegiaoAtual(proxima);
-
-        } else {
-
-          setJogoFinalizado(true);
-
-        }
-
-        setAnimandoMapa(false);
-
-      }, 2500);
-    }
-
-  }, [partes]);
-
+}, [partes]);
+  //aqui
   function toggleParte(index) {
 
     const novo = [...partes];
@@ -193,6 +214,18 @@ function Explorador({ voltar }) {
   }
 
   const tema = temaRegiao();
+
+    const binario = partes
+  .map(parte => (parte ? "1" : "0"))
+  .join("");
+
+  const decimal = partes.reduce(
+    (soma, ativa, index) =>
+      ativa
+        ? soma + pesos[regiaoAtual][index]
+        : soma,
+    0
+  );
 
   if (jogoFinalizado) {
 
@@ -271,6 +304,29 @@ function Explorador({ voltar }) {
       ⬅ Voltar
     </button>
 
+      <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    gap: "15px",
+    marginBottom: "10px"
+  }}
+>
+  {pesos[regiaoAtual].map((peso, index) => (
+    <div
+      key={index}
+      style={{
+        width: "90px",
+        textAlign: "center",
+        fontWeight: "bold",
+        fontSize: "1.2rem"
+      }}
+    >
+      {peso}
+    </div>
+  ))}
+</div>
+
     <div
       style={{
         display: "grid",
@@ -280,198 +336,328 @@ function Explorador({ voltar }) {
       }}
     >
 
-      {/* COLUNA ESQUERDA */}
+     {/* COLUNA ESQUERDA */}
 
-      <div>
+<div>
+
+  {/* INVENTÁRIO */}
+
+  <div
+    style={{
+      padding: "12px",
+      borderRadius: "12px",
+      background: "rgba(255,255,255,0.08)",
+      marginBottom: "15px"
+    }}
+  >
+    <h3>🏺 Inventário</h3>
+
+    {reliquias.length === 0 ? (
+
+      <p style={{ opacity: 0.7 }}>
+        Nenhuma relíquia encontrada
+      </p>
+
+    ) : (
+
+      reliquias.map((item, index) => (
 
         <div
+          key={index}
           style={{
-            padding: "15px",
-            borderRadius: "12px",
-            background: "rgba(255,255,255,0.08)",
-            marginBottom: "20px"
+            padding: "8px",
+            marginTop: "5px",
+            borderRadius: "8px",
+            background: "rgba(255,255,255,0.05)",
+            textAlign: "center"
           }}
         >
-          <h3>🏺 Relíquias</h3>
-
-          <div style={{ fontSize: "2rem" }}>
-            {reliquias.includes("🌿 Fragmento da Floresta") ? "🌿" : "❔"}{" "}
-            {reliquias.includes("❄️ Cristal Congelado") ? "❄️" : "❔"}{" "}
-            {reliquias.includes("🔥 Chama Antiga") ? "🔥" : "❔"}
-          </div>
+          {item}
         </div>
+
+      ))
+
+    )}
+
+    <div
+      style={{
+        marginTop: "10px",
+        fontSize: "0.7rem",
+        opacity: 0.8
+      }}
+    >
+      Encontradas: {reliquias.length}/6
+    </div>
+
+  </div>
+
+  {/* MAPA */}
+
+  <div
+    style={{
+      padding: "15px",
+      borderRadius: "12px",
+      background: "rgba(255,255,255,0.08)"
+    }}
+  >
+    <h3>🗺️ Mapa das Ruínas</h3>
+
+    {[1, 2, 3].map((regiao) => {
+
+      const desbloqueada =
+        desbloqueadas.includes(regiao);
+
+      const ativa =
+        regiaoAtual === regiao;
+
+      const nomeRegiao = {
+        1: "🌿 Floresta",
+        2: "❄️ Cavernas",
+        3: "🔥 Templo"
+      };
+
+      return (
 
         <div
+          key={regiao}
+          onClick={() => {
+
+            if (desbloqueada) {
+              setRegiaoAtual(regiao);
+            }
+
+          }}
           style={{
-            padding: "15px",
-            borderRadius: "12px",
-            background: "rgba(255,255,255,0.08)"
+            padding: "12px",
+            marginBottom: "10px",
+            borderRadius: "10px",
+
+            cursor: desbloqueada
+              ? "pointer"
+              : "not-allowed",
+
+            background: ativa
+              ? "#22c55e"
+              : desbloqueada
+              ? "#3b82f6"
+              : "#475569",
+
+            textAlign: "center",
+
+            fontWeight: "bold",
+
+            border: ativa
+              ? "2px solid white"
+              : "2px solid transparent",
+
+            transform: ativa
+              ? "scale(1.03)"
+              : "scale(1)",
+
+            transition: "0.3s"
           }}
         >
-          <h3>🗺️ Mapa</h3>
-
-          {[1, 2, 3].map((regiao) => {
-
-            const desbloqueada =
-              desbloqueadas.includes(regiao);
-
-            const ativa =
-              regiaoAtual === regiao;
-
-            return (
-
-              <div
-                key={regiao}
-                onClick={() => {
-
-                  if (desbloqueada) {
-                    setRegiaoAtual(regiao);
-                  }
-
-                }}
-                style={{
-                  padding: "12px",
-                  marginBottom: "10px",
-                  borderRadius: "10px",
-                  cursor: desbloqueada
-                    ? "pointer"
-                    : "not-allowed",
-
-                  background: ativa
-                    ? "#22c55e"
-                    : desbloqueada
-                    ? "#3b82f6"
-                    : "#475569",
-
-                  textAlign: "center",
-
-                  fontWeight: "bold"
-                }}
-              >
-                {desbloqueada
-                  ? `Região ${regiao}`
-                  : "🔒 Bloqueada"}
-              </div>
-
-            );
-
-          })}
-
+          {desbloqueada
+            ? nomeRegiao[regiao]
+            : "🔒 Região Bloqueada"}
         </div>
 
-      </div>
+      );
+
+    })}
+
+    <div
+      style={{
+        marginTop: "15px",
+        fontSize: "0.9rem",
+        opacity: 0.8
+      }}
+    >
+      Região atual: {regiaoAtual}/3
+    </div>
+
+  </div>
+
+</div>
 
       {/* COLUNA CENTRAL */}
 
+<div
+  style={{
+    textAlign: "center"
+  }}
+>
+
+  <h1
+    style={{
+      fontSize: "2.5rem",
+      marginBottom: "10px"
+    }}
+  >
+    💻 Ruínas da Computação
+  </h1>
+
+  <h2
+    style={{
+      marginBottom: "10px"
+    }}
+  >
+    {tema.titulo}
+  </h2>
+
+  <p
+    style={{
+      opacity: 0.8,
+      marginBottom: "20px"
+    }}
+  >
+    {historias[regiaoAtual].texto}
+  </p>
+
+  {/* PAINEL DE CONVERSÃO */}
+
+  <div
+    style={{
+      padding: "15px",
+      borderRadius: "12px",
+      background: "rgba(255,255,255,0.08)",
+      marginBottom: "20px"
+    }}
+  >
+
+    <h3>💻 Conversão Atual</h3>
+
+    <h1>
+      {binario}₂
+    </h1>
+
+    <h2>
+      = {decimal}
+    </h2>
+
+    <p>
+      🎯 Objetivo: {objetivos[regiaoAtual]}
+    </p>
+
+  </div>
+
+  {/* PESOS DOS BITS */}
+
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      gap: "15px",
+      marginBottom: "10px"
+    }}
+  >
+
+    {pesos[regiaoAtual].map((peso, index) => (
+
       <div
+        key={index}
         style={{
-          textAlign: "center"
+          width: "90px",
+          fontWeight: "bold",
+          fontSize: "1.0rem"
         }}
       >
-
-        <h1
-          style={{
-            fontSize: "2.5rem",
-            marginBottom: "20px"
-          }}
-        >
-          🧭 Ruínas Matemáticas
-        </h1>
-
-        <h2
-          style={{
-            marginBottom: "20px"
-          }}
-        >
-          {tema.titulo}
-        </h2>
-
-        <div
-          style={{
-            display: "grid",
-
-            gridTemplateColumns:
-              quantidade === 4
-                ? "repeat(4, 1fr)"
-                : quantidade === 6
-                ? "repeat(3, 1fr)"
-                : "repeat(4, 1fr)",
-
-            gap: "15px",
-
-            justifyContent: "center",
-
-            maxWidth:
-              quantidade === 4
-                ? "420px"
-                : quantidade === 6
-                ? "330px"
-                : "430px",
-
-            margin: "0 auto"
-          }}
-        >
-
-          {partes.map((ativa, index) => (
-
-            <div
-              key={index}
-              onClick={() => toggleParte(index)}
-              style={{
-                width: "90px",
-                height: "90px",
-
-                background: ativa
-                  ? "linear-gradient(135deg, #4ade80, #166534)"
-                  : "linear-gradient(135deg, #78716c, #44403c)",
-
-                border: ativa
-                  ? "3px solid #bbf7d0"
-                  : "3px solid #292524",
-
-                borderRadius: "16px",
-
-                cursor: "pointer",
-
-                transition: "0.3s",
-
-                transform: ativa
-                  ? "scale(1.08)"
-                  : "scale(1)",
-
-                boxShadow: ativa
-                  ? "0 0 25px rgba(74,222,128,0.7)"
-                  : "0 5px 12px rgba(0,0,0,0.35)"
-              }}
-            />
-
-          ))}
-
-        </div>
-
-        <div
-          style={{
-            marginTop: "25px",
-            minHeight: "60px"
-          }}
-        >
-
-          <h2
-            style={{
-              animation: "fadeIn 0.5s",
-
-              color:
-                mensagem.includes("equivalente")
-                  ? "#fde047"
-                  : "white"
-            }}
-          >
-            {mensagem}
-          </h2>
-
-        </div>
-
+        {peso}
       </div>
+
+    ))}
+
+  </div>
+
+  {/* BLOCOS */}
+
+  <div
+    style={{
+      display: "grid",
+
+      gridTemplateColumns: `repeat(${quantidade}, 1fr)`,
+
+      gap: "15px",
+
+      justifyContent: "center",
+
+      maxWidth: quantidade * 105,
+
+      margin: "0 auto"
+    }}
+  >
+
+    {partes.map((ativa, index) => (
+
+      <div
+        key={index}
+
+        onClick={() => toggleParte(index)}
+
+        style={{
+          width: "90px",
+          height: "90px",
+
+          background: ativa
+            ? "linear-gradient(135deg, #4ade80, #166534)"
+            : "linear-gradient(135deg, #78716c, #44403c)",
+
+          border: ativa
+            ? "3px solid #bbf7d0"
+            : "3px solid #292524",
+
+          borderRadius: "16px",
+
+          cursor: "pointer",
+
+          transition: "0.3s",
+
+          transform: ativa
+            ? "scale(1.08)"
+            : "scale(1)",
+
+          boxShadow: ativa
+            ? "0 0 25px rgba(74,222,128,0.7)"
+            : "0 5px 12px rgba(0,0,0,0.35)",
+
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+
+          fontSize: "1.5rem",
+          fontWeight: "bold"
+        }}
+      >
+        {ativa ? "1" : "0"}
+      </div>
+
+    ))}
+
+  </div>
+
+  {/* FEEDBACK */}
+
+  <div
+    style={{
+      marginTop: "25px",
+      minHeight: "60px"
+    }}
+  >
+
+    <h2
+      style={{
+        animation: "fadeIn 0.5s",
+        color: mensagem.includes("✅")
+          ? "#4ade80"
+          : "#fde047"
+      }}
+    >
+      {mensagem}
+    </h2>
+
+  </div>
+
+</div>
 
       {/* COLUNA DIREITA */}
 
