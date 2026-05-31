@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 function Explorador({ voltar }) {
 
@@ -11,7 +11,43 @@ function Explorador({ voltar }) {
   const [mensagem, setMensagem] = useState("");
   const [animandoMapa, setAnimandoMapa] = useState(false);
 
-  // controla quantidade de peças por região
+  const [reliquias, setReliquias] = useState([]);
+  const [descobertas, setDescobertas] = useState([]);
+  const [jogoFinalizado, setJogoFinalizado] = useState(false);
+
+  const historias = {
+    1: {
+      titulo: "🌿 Floresta das Frações",
+      texto:
+        "Antigas pedras escondem segredos sobre partes de um todo."
+    },
+
+    2: {
+      titulo: "❄️ Cavernas Congeladas",
+      texto:
+        "Cristais antigos preservam proporções esquecidas."
+    },
+
+    3: {
+      titulo: "🔥 Templo das Proporções",
+      texto:
+        "A última relíquia guarda o conhecimento final das frações."
+    }
+  };
+
+  const missoes = {
+    1: "Descubra uma fração equivalente a 1/2",
+    2: "Ative exatamente metade dos blocos",
+    3: "Restaure toda a ruína"
+  };
+
+  const nomesReliquias = {
+    1: "🌿 Fragmento da Floresta",
+    2: "❄️ Cristal Congelado",
+    3: "🔥 Chama Antiga"
+  };
+
+  // quantidade de peças por região
   useEffect(() => {
 
     let qtd = 4;
@@ -30,7 +66,6 @@ function Explorador({ voltar }) {
     const total = partes.length;
     const ativas = partes.filter(p => p).length;
 
-    // limpa mensagem se nada estiver marcado
     if (ativas === 0) {
       setMensagem("");
       return;
@@ -38,17 +73,33 @@ function Explorador({ voltar }) {
 
     let texto = `Você descobriu ${ativas}/${total}`;
 
-    // equivalências
+    // Descobertas matemáticas
+
     if (ativas === 2 && total === 4) {
+
       texto += " — equivalente a 1/2 ✨";
+
+      if (!descobertas.includes("2/4 = 1/2")) {
+        setDescobertas(prev => [...prev, "2/4 = 1/2"]);
+      }
     }
 
     if (ativas === 3 && total === 6) {
+
       texto += " — equivalente a 1/2 ✨";
+
+      if (!descobertas.includes("3/6 = 1/2")) {
+        setDescobertas(prev => [...prev, "3/6 = 1/2"]);
+      }
     }
 
     if (ativas === 4 && total === 8) {
+
       texto += " — equivalente a 1/2 ✨";
+
+      if (!descobertas.includes("4/8 = 1/2")) {
+        setDescobertas(prev => [...prev, "4/8 = 1/2"]);
+      }
     }
 
     if (ativas === 2 && total === 8) {
@@ -61,10 +112,20 @@ function Explorador({ voltar }) {
 
     setMensagem(texto);
 
-    // completou região
+    // região concluída
     if (ativas === total) {
 
       setMensagem("🏛️ Ruína restaurada!");
+
+      // ganha relíquia
+      if (!reliquias.includes(nomesReliquias[regiaoAtual])) {
+
+        setReliquias(prev => [
+          ...prev,
+          nomesReliquias[regiaoAtual]
+        ]);
+
+      }
 
       setAnimandoMapa(true);
 
@@ -81,13 +142,14 @@ function Explorador({ voltar }) {
             }
 
             return prev;
+
           });
 
           setRegiaoAtual(proxima);
 
         } else {
 
-          setMensagem("🏆 Você restaurou todas as Ruínas Matemáticas!");
+          setJogoFinalizado(true);
 
         }
 
@@ -108,7 +170,6 @@ function Explorador({ voltar }) {
 
   }
 
-  // tema por região
   function temaRegiao() {
 
     if (regiaoAtual === 1) {
@@ -133,94 +194,134 @@ function Explorador({ voltar }) {
 
   const tema = temaRegiao();
 
+  if (jogoFinalizado) {
+
+    return (
+
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0f172a",
+          color: "white",
+          textAlign: "center",
+          padding: "40px"
+        }}
+      >
+
+        <h1>🏆 RUÍNAS RESTAURADAS</h1>
+
+        <h2>🏺 Relíquias Encontradas</h2>
+
+        {reliquias.map((item, index) => (
+          <p key={index}>{item}</p>
+        ))}
+
+        <h2 style={{ marginTop: "30px" }}>
+          📖 Livro do Explorador
+        </h2>
+
+        {descobertas.map((item, index) => (
+          <p key={index}>{item}</p>
+        ))}
+
+        <h3>
+          Descobertas: {descobertas.length}
+        </h3>
+
+        <button
+          onClick={voltar}
+          style={{
+            marginTop: "30px",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
+          Voltar ao Hub
+        </button>
+
+      </div>
+
+    );
+  }
   return (
+  <div
+    style={{
+      minHeight: "100vh",
+      background: tema.fundo,
+      color: "white",
+      padding: "20px"
+    }}
+  >
+
+    <button
+      onClick={voltar}
+      style={{
+        padding: "12px 20px",
+        borderRadius: "12px",
+        border: "none",
+        cursor: "pointer",
+        marginBottom: "20px",
+        fontWeight: "bold",
+        background: "white",
+        color: "#111"
+      }}
+    >
+      ⬅ Voltar
+    </button>
+
     <div
       style={{
-        minHeight: "100vh",
-        background: tema.fundo,
-        color: "white",
-        textAlign: "center",
-        padding: "30px",
-        transition: "1s"
+        display: "grid",
+        gridTemplateColumns: "250px 1fr 300px",
+        gap: "25px",
+        alignItems: "start"
       }}
     >
 
-      {/* botão voltar */}
-      <button
-        onClick={voltar}
-        style={{
-          padding: "12px 20px",
-          borderRadius: "12px",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: "20px",
-          fontWeight: "bold",
-          background: "white",
-          color: "#111",
-          fontSize: "1rem"
-        }}
-      >
-        ⬅ Voltar
-      </button>
+      {/* COLUNA ESQUERDA */}
 
-      {/* título */}
-      <h1
-        style={{
-          fontSize: "3rem",
-          marginBottom: "10px"
-        }}
-      >
-        🧭 Ruínas Matemáticas
-      </h1>
+      <div>
 
-      <h2
-        style={{
-          opacity: 0.9,
-          marginBottom: "10px"
-        }}
-      >
-        {tema.titulo}
-      </h2>
+        <div
+          style={{
+            padding: "15px",
+            borderRadius: "12px",
+            background: "rgba(255,255,255,0.08)",
+            marginBottom: "20px"
+          }}
+        >
+          <h3>🏺 Relíquias</h3>
 
-      <p
-        style={{
-          opacity: 0.75,
-          maxWidth: "700px",
-          margin: "0 auto"
-        }}
-      >
-        Explore territórios antigos e descubra
-        frações escondidas nas ruínas.
-      </p>
+          <div style={{ fontSize: "2rem" }}>
+            {reliquias.includes("🌿 Fragmento da Floresta") ? "🌿" : "❔"}{" "}
+            {reliquias.includes("❄️ Cristal Congelado") ? "❄️" : "❔"}{" "}
+            {reliquias.includes("🔥 Chama Antiga") ? "🔥" : "❔"}
+          </div>
+        </div>
 
-      {/* MAPA */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: "25px",
-          marginTop: "40px",
-          marginBottom: "50px"
-        }}
-      >
+        <div
+          style={{
+            padding: "15px",
+            borderRadius: "12px",
+            background: "rgba(255,255,255,0.08)"
+          }}
+        >
+          <h3>🗺️ Mapa</h3>
 
-        {[1, 2, 3].map((regiao, index) => {
+          {[1, 2, 3].map((regiao) => {
 
-          const desbloqueada = desbloqueadas.includes(regiao);
-          const ativa = regiaoAtual === regiao;
+            const desbloqueada =
+              desbloqueadas.includes(regiao);
 
-          return (
-            <div
-              key={regiao}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "25px"
-              }}
-            >
+            const ativa =
+              regiaoAtual === regiao;
+
+            return (
 
               <div
+                key={regiao}
                 onClick={() => {
 
                   if (desbloqueada) {
@@ -228,12 +329,13 @@ function Explorador({ voltar }) {
                   }
 
                 }}
-
                 style={{
-                  width: "85px",
-                  height: "85px",
-
-                  borderRadius: "50%",
+                  padding: "12px",
+                  marginBottom: "10px",
+                  borderRadius: "10px",
+                  cursor: desbloqueada
+                    ? "pointer"
+                    : "not-allowed",
 
                   background: ativa
                     ? "#22c55e"
@@ -241,190 +343,224 @@ function Explorador({ voltar }) {
                     ? "#3b82f6"
                     : "#475569",
 
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  textAlign: "center",
 
-                  cursor: desbloqueada
-                    ? "pointer"
-                    : "not-allowed",
-
-                  fontWeight: "bold",
-
-                  fontSize: "1.1rem",
-
-                  border: "4px solid white",
-
-                  transition: "0.4s",
-
-                  transform: ativa
-                    ? "scale(1.1)"
-                    : "scale(1)",
-
-                  boxShadow: ativa
-                    ? "0 0 25px rgba(34,197,94,0.8)"
-                    : "0 0 10px rgba(0,0,0,0.4)",
-
-                  animation: animandoMapa && ativa
-                    ? "pulse 1s infinite"
-                    : "none"
+                  fontWeight: "bold"
                 }}
               >
-                {desbloqueada ? `🗺️ ${regiao}` : "🔒"}
+                {desbloqueada
+                  ? `Região ${regiao}`
+                  : "🔒 Bloqueada"}
               </div>
 
-              {/* linha entre regiões */}
-              {index < 2 && (
-                <div
-                  style={{
-                    width: "60px",
-                    height: "6px",
+            );
 
-                    borderRadius: "10px",
+          })}
 
-                    background:
-                      desbloqueadas.includes(regiao + 1)
-                        ? "#4ade80"
-                        : "#64748b",
-
-                    transition: "0.4s"
-                  }}
-                />
-              )}
-
-            </div>
-          );
-        })}
+        </div>
 
       </div>
 
-      {/* REGIÃO */}
-      <h2
-        style={{
-          marginBottom: "25px"
-        }}
-      >
-        🌎 Região {regiaoAtual}
-      </h2>
+      {/* COLUNA CENTRAL */}
 
-      {/* GRID */}
       <div
         style={{
-          display: "grid",
-
-          gridTemplateColumns:
-            quantidade === 4
-              ? "repeat(4, 1fr)"
-              : quantidade === 6
-              ? "repeat(3, 1fr)"
-              : "repeat(4, 1fr)",
-
-          gap: "15px",
-
-          justifyContent: "center",
-
-          maxWidth:
-            quantidade === 4
-              ? "420px"
-              : quantidade === 6
-              ? "330px"
-              : "430px",
-
-          margin: "0 auto"
+          textAlign: "center"
         }}
       >
 
-        {partes.map((ativa, index) => (
-
-          <div
-            key={index}
-
-            onClick={() => toggleParte(index)}
-
-            style={{
-              width: "90px",
-              height: "90px",
-
-              background: ativa
-                ? "linear-gradient(135deg, #4ade80, #166534)"
-                : "linear-gradient(135deg, #78716c, #44403c)",
-
-              border: ativa
-                ? "3px solid #bbf7d0"
-                : "3px solid #292524",
-
-              borderRadius: "16px",
-
-              cursor: "pointer",
-
-              transition: "0.3s",
-
-              transform: ativa
-                ? "scale(1.08)"
-                : "scale(1)",
-
-              boxShadow: ativa
-                ? "0 0 25px rgba(74,222,128,0.7)"
-                : "0 5px 12px rgba(0,0,0,0.35)"
-            }}
-          />
-
-        ))}
-
-      </div>
-
-      {/* FEEDBACK */}
-      <div
-        style={{
-          marginTop: "35px",
-          minHeight: "50px"
-        }}
-      >
+        <h1
+          style={{
+            fontSize: "2.5rem",
+            marginBottom: "20px"
+          }}
+        >
+          🧭 Ruínas Matemáticas
+        </h1>
 
         <h2
           style={{
-            transition: "0.3s",
-            animation: "fadeIn 0.5s"
+            marginBottom: "20px"
           }}
         >
-          {mensagem}
+          {tema.titulo}
         </h2>
+
+        <div
+          style={{
+            display: "grid",
+
+            gridTemplateColumns:
+              quantidade === 4
+                ? "repeat(4, 1fr)"
+                : quantidade === 6
+                ? "repeat(3, 1fr)"
+                : "repeat(4, 1fr)",
+
+            gap: "15px",
+
+            justifyContent: "center",
+
+            maxWidth:
+              quantidade === 4
+                ? "420px"
+                : quantidade === 6
+                ? "330px"
+                : "430px",
+
+            margin: "0 auto"
+          }}
+        >
+
+          {partes.map((ativa, index) => (
+
+            <div
+              key={index}
+              onClick={() => toggleParte(index)}
+              style={{
+                width: "90px",
+                height: "90px",
+
+                background: ativa
+                  ? "linear-gradient(135deg, #4ade80, #166534)"
+                  : "linear-gradient(135deg, #78716c, #44403c)",
+
+                border: ativa
+                  ? "3px solid #bbf7d0"
+                  : "3px solid #292524",
+
+                borderRadius: "16px",
+
+                cursor: "pointer",
+
+                transition: "0.3s",
+
+                transform: ativa
+                  ? "scale(1.08)"
+                  : "scale(1)",
+
+                boxShadow: ativa
+                  ? "0 0 25px rgba(74,222,128,0.7)"
+                  : "0 5px 12px rgba(0,0,0,0.35)"
+              }}
+            />
+
+          ))}
+
+        </div>
+
+        <div
+          style={{
+            marginTop: "25px",
+            minHeight: "60px"
+          }}
+        >
+
+          <h2
+            style={{
+              animation: "fadeIn 0.5s",
+
+              color:
+                mensagem.includes("equivalente")
+                  ? "#fde047"
+                  : "white"
+            }}
+          >
+            {mensagem}
+          </h2>
+
+        </div>
 
       </div>
 
-      {/* CSS */}
-      <style>
-        {`
-          @keyframes pulse {
-            0% {
-              transform: scale(1.05);
-            }
+      {/* COLUNA DIREITA */}
 
-            50% {
-              transform: scale(1.15);
-            }
+      <div>
 
-            100% {
-              transform: scale(1.05);
-            }
-          }
+        <div
+          style={{
+            padding: "15px",
+            borderRadius: "12px",
+            background: "rgba(255,255,255,0.08)",
+            marginBottom: "20px"
+          }}
+        >
+          <h3>
+            {historias[regiaoAtual].titulo}
+          </h3>
 
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: translateY(10px);
-            }
+          <p>
+            {historias[regiaoAtual].texto}
+          </p>
+        </div>
 
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}
-      </style>
+        <div
+          style={{
+            padding: "15px",
+            borderRadius: "12px",
+            background: "rgba(255,255,255,0.08)",
+            marginBottom: "20px"
+          }}
+        >
+          <h3>🎯 Missão Atual</h3>
+
+          <p>
+            {missoes[regiaoAtual]}
+          </p>
+        </div>
+
+        <div
+          style={{
+            padding: "15px",
+            borderRadius: "12px",
+            background: "rgba(255,255,255,0.08)"
+          }}
+        >
+          <h3>📖 Livro do Explorador</h3>
+
+          {descobertas.length === 0 ? (
+
+            <p>Nenhuma descoberta registrada.</p>
+
+          ) : (
+
+            descobertas.map((item, index) => (
+              <p key={index}>
+                ✨ {item}
+              </p>
+            ))
+
+          )}
+
+        </div>
+
+      </div>
 
     </div>
-  );
-}
 
+    <style>
+      {`
+        @keyframes pulse {
+          0% { transform: scale(1.05); }
+          50% { transform: scale(1.15); }
+          100% { transform: scale(1.05); }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}
+    </style>
+
+  </div>
+);
+}
 export default Explorador;
