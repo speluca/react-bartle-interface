@@ -1,766 +1,505 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-function Conquistador({ voltar }) {
-    const [andar, setAndar] = useState(0);
-    const [pontos, setPontos] = useState(0);
-    const [energia, setEnergia] = useState(10);
-    const [tempoRestante, setTempoRestante] = useState(30);
-    const [reliquias, setReliquias] = useState([]);
-    const [sequenciaAtual, setSequenciaAtual] = useState(0);
-    const [maiorSequencia, setMaiorSequencia] = useState(0);
-    const [jogoFinalizado, setJogoFinalizado] = useState(false);
-    const [bits, setBits] = useState([false, false, false, false]);
-    const [numeroAlvo, setNumeroAlvo] = useState(2);
-    const [valorAtual, setValorAtual] = useState(0);
-    const [mensagem, setMensagem] = useState("");
-    const [cliquesBits, setCliquesBits] = useState(0);
-    const [modulosResolvidos, setModulosResolvidos] = useState(0);
-    const [historicoModulos, setHistoricoModulos] = useState([]);
-    const [inicioModulo, setInicioModulo] = useState(Date.now());
-    const [acertos, setAcertos] = useState(0);
-    const [erros, setErros] = useState(0);
+// pesos de um byte (mostramos só os bits usados no desafio)
+const PESOS = [128, 64, 32, 16, 8, 4, 2, 1];
 
-
-    function toggleBit(index) {
-
-      if (jogoFinalizado) return;
-
-      const novo = [...bits];
-
-      novo[index] = !novo[index];
-
-      setBits(novo);
-
-      setCliquesBits(prev => prev + 1);
-
+// dificuldade leve: começa com 3 bits (até 7) e passa para 4 bits (até 15)
+function nivelDeBits(resolvidos) {
+  return resolvidos < 3 ? 3 : 4;
 }
 
-    function obterPesos() {
-
-      if (andar < 5) {
-        return [2, 1];
-      }
-
-      if (andar < 10) {
-        return [4, 2, 1];
-      }
-
-      return [8, 4, 2, 1];
-
-    }
-
-    function gerarNumero() {
-
-      if (andar < 5) {
-        const numeros = [2, 3];
-        return numeros[
-          Math.floor(Math.random() * numeros.length)
-        ];
-      }
-      if (andar < 10) {
-        return Math.floor(Math.random() * 6) + 2;
-      }
-      return Math.floor(Math.random() * 14) + 2;
+function paraBinario(n, bits) {
+  return n.toString(2).padStart(bits, "0");
 }
 
-useEffect(() => {
+function embaralhar(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
 
-  const pesos = obterPesos();
+// gera 4 alternativas próximas (variando 1 bit), completando se faltar
+function gerarVizinhos(valor, bits) {
+  const max = (1 << bits) - 1;
+  const conjunto = new Set([valor]);
 
-  let soma = 0;
-
-  bits.forEach((ativo, index) => {
-
-    if (ativo) {
-      soma += pesos[index];
+  let tentativas = 0;
+  while (conjunto.size < 4 && tentativas < 50) {
+    const bit = Math.floor(Math.random() * bits);
+    const variacao = valor ^ (1 << bit); // inverte um bit
+    if (variacao >= 1 && variacao <= max) {
+      conjunto.add(variacao);
     }
-
-  });
-
-  setValorAtual(soma);
-
-}, [bits, andar]);
-
-useEffect(() => {
-
-  if (valorAtual !== numeroAlvo) return;
-
-  const tempoModulo =
-    (Date.now() - inicioModulo) / 1000;
-
-  setMensagem("✔ Módulo Energizado!");
-
-  setPontos(prev => prev + 1);
-  setAcertos(prev => prev + 1);
-
-  setAndar(prev => prev + 1);
-
-  setEnergia(prev =>
-    Math.min(prev + 1, 10)
-  );
-
-  setModulosResolvidos(prev => prev + 1);
-
-  setSequenciaAtual(prev => {
-
-    const nova = prev + 1;
-
-    setMaiorSequencia(atual =>
-      Math.max(atual, nova)
-    );
-
-    return nova;
-
-  });
-
-  setHistoricoModulos(prev => [
-
-    ...prev,
-
-    {
-      alvo: numeroAlvo,
-      tempo: tempoModulo
-    }
-
-  ]);
-
-  setTimeout(() => {
-
-    const novosPesos =
-      andar + 1 < 5
-        ? [2, 1]
-        : andar + 1 < 10
-        ? [4, 2, 1]
-        : [8, 4, 2, 1];
-
-    setBits(
-      Array(novosPesos.length).fill(false)
-    );
-
-    setNumeroAlvo(gerarNumero());
-
-    setInicioModulo(Date.now());
-
-    setMensagem("");
-
-  }, 700);
-
-}, [valorAtual]);
-
-useEffect(() => {
-
-  setNumeroAlvo(gerarNumero());
-
-  setBits([false, false]);
-
-}, []);
-
-useEffect(() => {
-
-  if (jogoFinalizado) return;
-
-  const intervalo = setInterval(() => {
-
-    setTempoRestante(prev => {
-
-      if (prev <= 1) {
-
-        setJogoFinalizado(true);
-
-        return 0;
-      }
-
-      return prev - 1;
-
-    });
-
-  }, 1000);
-
-  return () => clearInterval(intervalo);
-
-}, [jogoFinalizado]);
-
-useEffect(() => {
-
-  if (jogoFinalizado) return;
-
-  const intervalo = setInterval(() => {
-
-    setEnergia(prev => {
-
-      if (prev <= 1) {
-
-        setJogoFinalizado(true);
-
-        return 0;
-      }
-
-      return prev - 1;
-
-    });
-
-  }, 2000);
-
-  return () => clearInterval(intervalo);
-
-}, [jogoFinalizado]);
-
-useEffect(() => {
-
-  if (valorAtual > numeroAlvo) {
-
-    setErros(prev => prev + 1);
-
-    setSequenciaAtual(0);
-
-    setMensagem("✖ Valor acima do alvo");
-
+    tentativas++;
   }
 
-}, [valorAtual]);
-const totalTentativas =
-  acertos + erros;
+  // completa com valores aleatórios caso não haja vizinhos suficientes
+  while (conjunto.size < 4) {
+    conjunto.add(Math.floor(Math.random() * max) + 1);
+  }
 
-const precisao =
-  totalTentativas === 0
-    ? 0
-    : Math.round(
-        (acertos / totalTentativas) * 100
-      );
+  return [...conjunto];
+}
+
+// cada desafio é um "firewall" a ser quebrado
+function gerarPergunta(bits) {
+  const max = (1 << bits) - 1;
+  const tipo = Math.random() < 0.5 ? "decode" : "encode";
+  const valor = Math.floor(Math.random() * max) + 1; // 1..max
+  const binario = paraBinario(valor, bits);
+  const pesos = PESOS.slice(-bits);
+
+  if (tipo === "decode") {
+    // mostra o binário, pergunta o decimal
+    return {
+      tipo,
+      valor,
+      binario,
+      bits,
+      pesos,
+      pergunta: "Qual valor decimal foi gerado?",
+      opcoes: embaralhar(gerarVizinhos(valor, bits)),
+      resposta: valor
+    };
+  }
+
+  // encode: mostra o decimal, pergunta o binário
+  return {
+    tipo,
+    valor,
+    binario,
+    bits,
+    pesos,
+    pergunta: "Qual representação binária corresponde ao valor?",
+    opcoes: embaralhar(
+      gerarVizinhos(valor, bits).map((v) => paraBinario(v, bits))
+    ),
+    resposta: binario
+  };
+}
+
+function Competidor({ voltar }) {
+
+  const VIDAS_INICIAIS = 3;
+
+  const [vidas, setVidas] = useState(VIDAS_INICIAIS);
+  const [pontos, setPontos] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [maiorStreak, setMaiorStreak] = useState(0);
+  const [acertos, setAcertos] = useState(0);
+  const [erros, setErros] = useState(0);
+  const [temposResposta, setTemposResposta] = useState([]);
+  const [jogoFinalizado, setJogoFinalizado] = useState(false);
+
+  const [pergunta, setPergunta] = useState(() => gerarPergunta(nivelDeBits(0)));
+  const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState(""); // "ok" | "erro"
+  const [erroFlash, setErroFlash] = useState(0); // dispara animação de erro
+
+  const inicioRef = useRef(0);
+
+  // reinicia o cronômetro de resposta sempre que surge uma nova pergunta
+  useEffect(() => {
+    inicioRef.current = Date.now();
+  }, [pergunta]);
+
+  function proximaPergunta(resolvidos) {
+    setPergunta(gerarPergunta(nivelDeBits(resolvidos)));
+    setTipoMensagem("");
+    setMensagem("");
+  }
+
+  function responder(opcao, tempo) {
+    if (jogoFinalizado) return;
+
+    setTemposResposta((prev) => [...prev, tempo]);
+
+    const acertou = opcao === pergunta.resposta;
+    const resolvidos = acertos + erros + 1; // firewalls enfrentados após este
+
+    if (acertou) {
+      const novaStreak = streak + 1;
+
+      setStreak(novaStreak);
+      setMaiorStreak((m) => Math.max(m, novaStreak));
+      setPontos((p) => p + 10 * novaStreak); // combo aumenta a pontuação
+      setAcertos((a) => a + 1);
+
+      setTipoMensagem("ok");
+      setMensagem(`✔ Firewall quebrado! Combo x${novaStreak}`);
+      proximaPergunta(resolvidos);
+    } else {
+      const novasVidas = vidas - 1;
+
+      setVidas(novasVidas);
+      setErros((e) => e + 1);
+      setStreak(0);
+      setTipoMensagem("erro");
+      setErroFlash((n) => n + 1); // dispara flash vermelho + tremor
+
+      if (novasVidas <= 0) {
+        setMensagem("💀 Sistema bloqueou o acesso!");
+        setJogoFinalizado(true);
+      } else {
+        setMensagem(
+          `✖ Código incorreto! Era ${
+            pergunta.tipo === "decode" ? pergunta.valor : pergunta.binario
+          }`
+        );
+        proximaPergunta(resolvidos);
+      }
+    }
+  }
+
+  // estatísticas
+  const totalTentativas = acertos + erros;
+  const precisao =
+    totalTentativas === 0
+      ? 0
+      : Math.round((acertos / totalTentativas) * 100);
 
   const tempoMedio =
-  historicoModulos.length === 0
-    ? 0
-    : (
-        historicoModulos.reduce(
-          (acc, item) => acc + item.tempo,
-          0
-        ) / historicoModulos.length
-      ).toFixed(1);
+    temposResposta.length === 0
+      ? 0
+      : (
+          temposResposta.reduce((acc, t) => acc + t, 0) /
+          temposResposta.length
+        ).toFixed(1);
 
-
-
-      if (jogoFinalizado) {
-
-  return (
-
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f172a",
-        color: "white",
-        padding: "40px",
-        textAlign: "center"
-      }}
-    >
-
-      <h1>🏆 Resultado</h1>
-
+  // 🏁 TELA FINAL
+  if (jogoFinalizado) {
+    return (
       <div
         style={{
-          maxWidth: "600px",
-          margin: "0 auto",
-          textAlign: "left",
-          background: "rgba(255,255,255,0.08)",
-          padding: "25px",
-          borderRadius: "15px"
+          height: "100vh",
+          boxSizing: "border-box",
+          overflow: "auto",
+          background: "linear-gradient(to bottom, #020617, #0f172a)",
+          color: "#e2e8f0",
+          padding: "40px",
+          textAlign: "center",
+          fontFamily: "monospace"
         }}
       >
+        <h1 style={{ color: "#f87171" }}>💀 ACESSO BLOQUEADO</h1>
+        <p style={{ opacity: 0.85, marginBottom: "20px" }}>
+          Suas vidas acabaram. Veja o seu desempenho como hacker.
+        </p>
 
-        <h3>🏢 Andar Máximo: {andar}</h3>
-
-        <h3>🏆 Pontuação: {pontos}</h3>
-
-        <h3>🎯 Precisão: {precisao}%</h3>
-
-        <h3>🔥 Maior Sequência: {maiorSequencia}</h3>
-
-        <h3>🖱 Cliques nos Bits: {cliquesBits}</h3>
-
-        <h3>
-          ⏱ Tempo Médio por Módulo:
-          {" "}
-          {tempoMedio}s
-        </h3>
-
-        <h3>
-          🧩 Módulos Resolvidos:
-          {" "}
-          {modulosResolvidos}
-        </h3>
-
-        <h2
+        <div
           style={{
-            marginTop: "30px"
+            maxWidth: "600px",
+            margin: "0 auto",
+            textAlign: "left",
+            background: "rgba(34,197,94,0.08)",
+            border: "1px solid rgba(34,197,94,0.3)",
+            padding: "25px",
+            borderRadius: "15px"
           }}
         >
-          🏺 Relíquias Obtidas
-        </h2>
+          <h3>🏆 Pontuação Final: {pontos}</h3>
+          <h3>✅ Acertos: {acertos}</h3>
+          <h3>❌ Erros: {erros}</h3>
+          <h3>🎯 Precisão: {precisao}%</h3>
+          <h3>🔥 Maior Streak: {maiorStreak}</h3>
+          <h3>⏱ Tempo Médio de Resposta: {tempoMedio}s</h3>
+        </div>
 
-        {
-          reliquias.length === 0
-          ? (
-            <p>Nenhuma encontrada.</p>
-          )
-          : (
-            reliquias.map((item, index) => (
-              <p key={index}>
-                {item}
-              </p>
-            ))
-          )
-        }
-
+        <button
+          onClick={voltar}
+          style={{
+            marginTop: "25px",
+            padding: "12px 20px",
+            border: "none",
+            borderRadius: "10px",
+            cursor: "pointer",
+            fontWeight: "bold"
+          }}
+        >
+          ⬅ Voltar ao Hub
+        </button>
       </div>
+    );
+  }
 
-      <button
-        onClick={voltar}
-        style={{
-          marginTop: "25px",
-          padding: "12px 20px",
-          border: "none",
-          borderRadius: "10px",
-          cursor: "pointer"
-        }}
-      >
-        ⬅ Voltar ao Hub
-      </button>
-
-    </div>
-
-  );
-
-}
+  // 🎮 TELA PRINCIPAL (tela única)
   return (
-
     <div
       style={{
-        minHeight: "100vh",
-        background: "linear-gradient(to bottom, #0f172a, #1e293b)",
-        color: "white",
-        padding: "20px"
+        height: "100vh",
+        boxSizing: "border-box",
+        overflow: "auto",
+        background: "linear-gradient(to bottom, #020617, #0f172a)",
+        color: "#e2e8f0",
+        padding: "16px",
+        fontFamily: "monospace",
+        position: "relative"
       }}
     >
+      {/* flash vermelho de erro */}
+      {erroFlash > 0 && (
+        <div
+          key={erroFlash}
+          style={{
+            position: "fixed",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 50,
+            background:
+              "radial-gradient(circle, rgba(239,68,68,0) 40%, rgba(239,68,68,0.55) 100%)",
+            animation: "flashErro 0.45s ease-out"
+          }}
+        />
+      )}
 
       <button
         onClick={voltar}
         style={{
-          padding: "10px 20px",
+          padding: "8px 16px",
           borderRadius: "10px",
           border: "none",
           cursor: "pointer",
-          marginBottom: "20px"
+          marginBottom: "12px",
+          fontWeight: "bold",
+          background: "#e2e8f0",
+          color: "#111"
         }}
       >
         ⬅ Voltar
       </button>
 
       <div
+        key={erroFlash}
         style={{
-          display: "grid",
-          gridTemplateColumns: "250px 1fr 250px",
-          gap: "20px",
-          height: "85vh"
+          maxWidth: "720px",
+          margin: "0 auto",
+          textAlign: "center",
+          animation: erroFlash ? "shake 0.4s" : "none"
         }}
       >
 
-        {/* ESQUERDA */}
+        <h1 style={{ fontSize: "1.9rem", margin: "0 0 2px", color: "#4ade80" }}>
+          🕵️ Quiz Hacker
+        </h1>
+        <p style={{ opacity: 0.8, fontSize: "0.85rem", margin: "0 0 14px" }}>
+          Invada os sistemas quebrando os firewalls binários.
+        </p>
 
-<div>
-
-  {/* ENERGIA */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "20px"
-    }}
-  >
-
-    <h3>⚡ Energia</h3>
-
-    <h2>{energia}/10</h2>
-
-    <div
-      style={{
-        width: "100%",
-        height: "12px",
-        background: "#334155",
-        borderRadius: "10px",
-        overflow: "hidden"
-      }}
-    >
-
-      <div
-        style={{
-          width: `${energia * 10}%`,
-          height: "100%",
-          background: "#22c55e",
-          transition: "0.3s"
-        }}
-      />
-
-    </div>
-
-  </div>
-
-  {/* TORRE */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "20px"
-    }}
-  >
-
-    <div
-  style={{
-    display: "flex",
-    flexDirection: "column-reverse",
-    alignItems: "center",
-    gap: "3px",
-    marginTop: "15px",
-    minHeight: "220px"
-  }}
->
-
-  {[...Array(Math.min(andar, 15))].map((_, index) => (
-
-    <div
-      key={index}
-      style={{
-        width: "70px",
-        height: "12px",
-        background: "#38bdf8",
-        border: "1px solid white",
-        borderRadius: "3px"
-      }}
-    />
-
-  ))}
-
-  <div
-    style={{
-      width: "90px",
-      height: "20px",
-      background: "#64748b",
-      borderRadius: "6px",
-      border: "2px solid white"
-    }}
-  />
-
-</div>
-
-<h2 style={{ marginTop: "15px" }}>
-  {andar}
-</h2>
-
-<p>andares concluídos</p>
-
-  </div>
-
-  {/* RELÍQUIAS */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)"
-    }}
-  >
-
-    <h3>🏺 Relíquias</h3>
-
-    <div
-      style={{
-        fontSize: "1.2rem",
-        lineHeight: "2"
-      }}
-    >
-
-      {reliquias.length === 0 ? (
-
-        <p>Nenhuma encontrada</p>
-
-      ) : (
-
-        reliquias.map((item, index) => (
-          <div key={index}>
-            {item}
+        {/* STATUS */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "12px",
+            marginBottom: "16px"
+          }}
+        >
+          <div
+            style={{
+              padding: "10px",
+              borderRadius: "10px",
+              background: "rgba(255,255,255,0.06)"
+            }}
+          >
+            <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>Vidas</div>
+            <div style={{ fontSize: "1.3rem" }}>
+              {"❤️".repeat(vidas)}
+              {"🖤".repeat(VIDAS_INICIAIS - vidas)}
+            </div>
           </div>
-        ))
 
-      )}
+          <div
+            style={{
+              padding: "10px",
+              borderRadius: "10px",
+              background: "rgba(255,255,255,0.06)"
+            }}
+          >
+            <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>Pontos</div>
+            <div style={{ fontSize: "1.3rem", fontWeight: "bold" }}>
+              {pontos}
+            </div>
+          </div>
 
-    </div>
+          <div
+            style={{
+              padding: "10px",
+              borderRadius: "10px",
+              background: "rgba(255,255,255,0.06)"
+            }}
+          >
+            <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>Streak</div>
+            <div style={{ fontSize: "1.3rem", fontWeight: "bold" }}>
+              🔥 {streak}
+            </div>
+          </div>
+        </div>
 
-  </div>
+        {/* FIREWALL */}
+        <div
+          style={{
+            padding: "18px",
+            borderRadius: "15px",
+            background: "rgba(34,197,94,0.08)",
+            border: "1px solid rgba(34,197,94,0.3)",
+            marginBottom: "16px"
+          }}
+        >
+          <div style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "10px" }}>
+            🔒 Firewall #{acertos + erros + 1}
+          </div>
 
-</div>
+          {pergunta.tipo === "decode" ? (
+            <>
+              {/* pesos */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${pergunta.bits}, 1fr)`,
+                  gap: "8px",
+                  maxWidth: `${pergunta.bits * 64}px`,
+                  margin: "0 auto 4px",
+                  fontSize: "0.85rem",
+                  opacity: 0.7
+                }}
+              >
+                {pergunta.pesos.map((p) => (
+                  <div key={p}>{p}</div>
+                ))}
+              </div>
+              {/* bits */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${pergunta.bits}, 1fr)`,
+                  gap: "8px",
+                  maxWidth: `${pergunta.bits * 64}px`,
+                  margin: "0 auto"
+                }}
+              >
+                {pergunta.binario.split("").map((b, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "10px 0",
+                      borderRadius: "8px",
+                      fontSize: "1.4rem",
+                      fontWeight: "bold",
+                      background:
+                        b === "1" ? "#16a34a" : "rgba(255,255,255,0.06)",
+                      color: b === "1" ? "white" : "#64748b"
+                    }}
+                  >
+                    {b}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <h1 style={{ fontSize: "3rem", margin: "8px 0" }}>
+              {pergunta.valor}
+            </h1>
+          )}
 
-        {/* COLUNA CENTRAL */}
+          <p style={{ margin: "14px 0 0", fontSize: "1.05rem" }}>
+            {pergunta.pergunta}
+          </p>
+        </div>
 
-<div
-  style={{
-    textAlign: "center"
-  }}
->
+        {/* ALTERNATIVAS */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+            marginBottom: "14px"
+          }}
+        >
+          {pergunta.opcoes.map((op, i) => (
+            <button
+              key={i}
+              onClick={() =>
+                responder(op, (Date.now() - inicioRef.current) / 1000)
+              }
+              style={{
+                padding: "16px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.15)",
+                cursor: "pointer",
+                fontSize: "1.3rem",
+                fontWeight: "bold",
+                fontFamily: "monospace",
+                background: "rgba(255,255,255,0.06)",
+                color: "#e2e8f0",
+                transition: "0.2s"
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(34,197,94,0.25)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "rgba(255,255,255,0.06)")
+              }
+            >
+              {op}
+            </button>
+          ))}
+        </div>
 
-  <h1
-    style={{
-      fontSize: "2.5rem",
-      marginBottom: "10px"
-    }}
-  >
-    📡 Torre da Transmissão
-  </h1>
+        {/* FEEDBACK */}
+        <div style={{ minHeight: "32px" }}>
+          <h3
+            style={{
+              margin: 0,
+              color:
+                tipoMensagem === "ok"
+                  ? "#4ade80"
+                  : tipoMensagem === "erro"
+                  ? "#f87171"
+                  : "white"
+            }}
+          >
+            {mensagem}
+          </h3>
+        </div>
 
-  <p
-    style={{
-      opacity: 0.8,
-      marginBottom: "25px"
-    }}
-  >
-    Energize o módulo convertendo o valor decimal para binário.
-  </p>
-
-  {/* ALVO */}
-
-  <div
-    style={{
-      padding: "20px",
-      borderRadius: "15px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "25px"
-    }}
-  >
-
-    <h3>🎯 Valor Alvo</h3>
-
-    <h1
-      style={{
-        fontSize: "4rem",
-        margin: 0
-      }}
-    >
-      {numeroAlvo}
-    </h1>
-
-  </div>
-
-  {/* VALOR FORMADO */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "15px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "25px"
-    }}
-  >
-
-    <h3>🔢 Valor Formado</h3>
-
-    <h1>{valorAtual}</h1>
-
-  </div>
-
-  {/* PESOS */}
-
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(4, 80px)",
-      justifyContent: "center",
-      gap: "15px",
-      marginBottom: "10px"
-    }}
-  >
-
-    {obterPesos().map((peso) => (
-
-      <div
-        key={peso}
-        style={{
-          fontWeight: "bold",
-          fontSize: "1.2rem"
-        }}
-      >
-        {peso}
-      </div>
-
-    ))}
-
-  </div>
-
-  {/* BITS */}
-
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(4, 80px)",
-      justifyContent: "center",
-      gap: "15px"
-    }}
-  >
-
-    {bits.map((ativo, index) => (
-
-      <button
-        key={index}
-        onClick={() => toggleBit(index)}
-        style={{
-          width: "80px",
-          height: "80px",
-          borderRadius: "15px",
-          border: "none",
-          cursor: "pointer",
-
-          fontSize: "1.8rem",
-          fontWeight: "bold",
-
-          background: ativo
-            ? "#22c55e"
-            : "#475569",
-
-          color: "white",
-
-          transform: ativo
-            ? "scale(1.08)"
-            : "scale(1)",
-
-          transition: "0.3s"
-        }}
-      >
-        {ativo ? "1" : "0"}
-      </button>
-
-    ))}
-
-  </div>
-
-  {/* FEEDBACK */}
-
-  <div
-    style={{
-      marginTop: "30px",
-      minHeight: "50px"
-    }}
-  >
-
-    <h2
-      style={{
-        color:
-          mensagem.includes("✔")
-            ? "#4ade80"
-            : mensagem.includes("✖")
-            ? "#f87171"
-            : "white"
-      }}
-    >
-      {mensagem}
-    </h2>
-
-  </div>
-
-</div>
-
-        {/* COLUNA DIREITA */}
-
-<div>
-
-  {/* TEMPO */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "20px",
-      textAlign: "center"
-    }}
-  >
-
-    <h3>⏱ Tempo</h3>
-
-    <h1
-      style={{
-        margin: 0,
-        color:
-          tempoRestante <= 10
-            ? "#f87171"
-            : "white"
-      }}
-    >
-      {tempoRestante}s
-    </h1>
-
-  </div>
-
-  {/* PONTOS */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "20px",
-      textAlign: "center"
-    }}
-  >
-
-    <h3>🏆 Pontos</h3>
-
-    <h1>{pontos}</h1>
-
-  </div>
-
-  {/* SEQUÊNCIA */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)",
-      marginBottom: "20px",
-      textAlign: "center"
-    }}
-  >
-
-    <h3>🔥 Sequência</h3>
-
-    <h1>{sequenciaAtual}</h1>
-
-  </div>
-
-  {/* RECORDE */}
-
-  <div
-    style={{
-      padding: "15px",
-      borderRadius: "12px",
-      background: "rgba(255,255,255,0.08)",
-      textAlign: "center"
-    }}
-  >
-
-    <h3>📈 Melhor Sequência</h3>
-
-    <h1>{maiorSequencia}</h1>
-
-  </div>
-
-</div>
+        {/* MINI PLACAR */}
+        <div
+          style={{
+            marginTop: "10px",
+            fontSize: "0.85rem",
+            opacity: 0.8,
+            display: "flex",
+            justifyContent: "center",
+            gap: "18px"
+          }}
+        >
+          <span>✅ {acertos}</span>
+          <span>❌ {erros}</span>
+          <span>🎯 {precisao}%</span>
+          <span>📈 Melhor streak: {maiorStreak}</span>
+        </div>
 
       </div>
 
-    </div>
+      <style>
+        {`
+          @keyframes flashErro {
+            0% { opacity: 0; }
+            25% { opacity: 1; }
+            100% { opacity: 0; }
+          }
 
+          @keyframes shake {
+            0% { transform: translateX(0); }
+            15% { transform: translateX(-12px); }
+            30% { transform: translateX(10px); }
+            45% { transform: translateX(-8px); }
+            60% { transform: translateX(6px); }
+            75% { transform: translateX(-4px); }
+            100% { transform: translateX(0); }
+          }
+        `}
+      </style>
+    </div>
   );
 }
 
-export default Conquistador;
+export default Competidor;

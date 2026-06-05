@@ -196,20 +196,20 @@ function Explorador({ voltar }) {
     if (regiaoAtual === 1) {
       return {
         fundo: "linear-gradient(to bottom, #0f172a, #1e293b)",
-        titulo: "🌿 Floresta das Frações"
+        titulo: "🌿 Floresta dos Bits"
       };
     }
 
     if (regiaoAtual === 2) {
       return {
         fundo: "linear-gradient(to bottom, #1e1b4b, #312e81)",
-        titulo: "❄️ Cavernas Congeladas"
+        titulo: "❄️ Cavernas dos Bytes"
       };
     }
 
     return {
       fundo: "linear-gradient(to bottom, #3f0d12, #a71d31)",
-      titulo: "🔥 Templo das Proporções"
+      titulo: "🔥 Templo da Conversão"
     };
   }
 
@@ -494,7 +494,7 @@ function Explorador({ voltar }) {
       marginBottom: "10px"
     }}
   >
-    💻 Ruínas da Computação
+    🧭 Ruínas Binárias
   </h1>
 
   <h2
