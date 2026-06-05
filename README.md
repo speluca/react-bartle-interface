@@ -1,16 +1,25 @@
-# React + Vite
+# TCC — Binário & Estilos de Jogo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação web (React + Vite) para um estudo experimental que investiga como diferentes
+estilos de jogo (perfis de Bartle) se relacionam com o aprendizado de **sistema binário**.
 
-Currently, two official plugins are available:
+## Documentação
+- 📘 **[docs/visao-geral.md](docs/visao-geral.md)** — visão geral, fluxo, arquitetura, status e como testar.
+- 📋 **[docs/questionarios.md](docs/questionarios.md)** — TCLE, questionários e esquema de dados.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Rodando
 
-## React Compiler
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build
+npm run lint
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Status atual
+**Etapa 1 concluída** — fluxo completo do estudo navegável (entrada → TCLE → demográfico →
+pré-teste → 4 jogos em ordem aleatória → pós-teste → encerramento) + modo admin com acesso
+livre. Ainda **sem backend**: a sessão é registrada no `console` ao final do fluxo.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Próximas etapas (captura de métricas dos jogos, Supabase e área de admin) estão descritas
+em [docs/visao-geral.md](docs/visao-geral.md#status--roadmap).
