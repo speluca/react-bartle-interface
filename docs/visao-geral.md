@@ -130,8 +130,21 @@ entrada → login → Hub (escolhe qualquer jogo) → joga → volta ao Hub → 
 - Por ora o código é **aceito sem validação** (qualquer texto) — o cruzamento com o Bartle
   externo é feito por `codigo` na planilha. Validação por lista fica para quando definirmos.
 
-### ⏳ Etapa 4 — Admin
-- Login real (Supabase Auth), geração de lote de códigos, export CSV.
+### ⏳ Etapa 4 — Admin (próxima sessão)
+1. **Login real de admin** via Supabase Auth (`signInWithPassword`) — substitui o stub atual.
+2. **Reativar o RLS do jeito certo** (hoje está **desligado** na `sessao`):
+   - anônimo: INSERT/UPDATE (grava); **sem** SELECT.
+   - admin autenticado: SELECT (lê tudo).
+3. **Painel do admin**: listar `sessao` + `resultado_jogo` e **exportar CSV**.
+
+**Decisões pendentes pra começar:**
+- E-mail do usuário admin (criar em Authentication → Users no Supabase).
+- Formato do CSV: separado (`sessao.csv` + `resultado_jogo.csv`) ou achatado (1 linha/participante).
+- Painel só listar+exportar, ou com filtros/busca.
+
+⚠️ **Estado atual de segurança:** o RLS da `sessao` foi **desativado** (`alter table sessao
+disable row level security;`) para destravar a gravação. Reativar corretamente é o passo 2
+acima — importante antes de a coleta real ir pro ar com o repositório público.
 
 ---
 
