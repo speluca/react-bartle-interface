@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ResultadoJogo from "./ResultadoJogo";
 
 function Construtor({ voltar, aoConcluir, modoEstudo }) {
 
@@ -203,66 +204,48 @@ function Construtor({ voltar, aoConcluir, modoEstudo }) {
   // 🏁 TELA FINAL
   if (jogoFinalizado) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(to bottom, #0f172a, #1e1b4b)",
-          color: "white",
-          padding: "40px",
-          textAlign: "center"
-        }}
+      <ResultadoJogo
+        emoji="🏙️"
+        titulo="Comunidade Restaurada"
+        subtitulo="Graças à sua ajuda, os personagens estão reunidos novamente!"
+        cor="#818cf8"
+        fundo="linear-gradient(to bottom, #0f172a, #1e1b4b)"
+        stats={[
+          { icone: "🛠️", label: "Artefatos", valor: artefatosConcluidos.length },
+          { icone: "🤝", label: "Missões", valor: historicoMissoes.length },
+          { icone: "✅", label: "Acertos", valor: acertos },
+          { icone: "❌", label: "Erros", valor: erros },
+          { icone: "🔁", label: "Tentativas", valor: tentativas },
+          { icone: "🎯", label: "Precisão", valor: `${precisao}%` },
+          { icone: "⏱", label: "Tempo médio", valor: `${tempoMedio}s` },
+          { icone: "⚡", label: "Eficiência", valor: `${eficiencia}%` }
+        ]}
+        rotuloBotao={modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
+        onBotao={modoEstudo ? () => aoConcluir(metricas) : voltar}
       >
-        <h1>🏙️ COMUNIDADE RESTAURADA</h1>
-
-        <p style={{ opacity: 0.85, maxWidth: "640px", margin: "10px auto 30px" }}>
-          Graças à sua ajuda, todos os serviços da cidade digital voltaram a
-          funcionar e os personagens estão reunidos novamente!
-        </p>
-
         <div
           style={{
-            maxWidth: "640px",
-            margin: "0 auto",
-            textAlign: "left",
-            background: "rgba(255,255,255,0.08)",
-            padding: "25px",
-            borderRadius: "15px"
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "12px",
+            padding: "14px 16px",
+            textAlign: "left"
           }}
         >
-          <h3>🛠️ Artefatos Concluídos: {artefatosConcluidos.length}</h3>
-          <h3>🤝 Missões Atendidas: {historicoMissoes.length}</h3>
-          <h3>✅ Acertos: {acertos}</h3>
-          <h3>❌ Erros: {erros}</h3>
-          <h3>🔁 Tentativas Realizadas: {tentativas}</h3>
-          <h3>🎯 Precisão: {precisao}%</h3>
-          <h3>⏱ Tempo Médio de Construção: {tempoMedio}s</h3>
-          <h3>⚡ Eficiência das Soluções: {eficiencia}%</h3>
-
-          <h2 style={{ marginTop: "25px" }}>🏆 Artefatos Restaurados</h2>
-
+          <div style={{ fontWeight: 700, marginBottom: "6px" }}>
+            🏆 Artefatos Restaurados
+          </div>
           {artefatosConcluidos.length === 0 ? (
-            <p>Nenhum artefato concluído.</p>
+            <p style={{ opacity: 0.7, margin: 0 }}>Nenhum.</p>
           ) : (
             artefatosConcluidos.map((item, index) => (
-              <p key={index}>{item}</p>
+              <p key={index} style={{ margin: "2px 0" }}>
+                {item}
+              </p>
             ))
           )}
         </div>
-
-        <button
-          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
-          style={{
-            marginTop: "30px",
-            padding: "12px 20px",
-            borderRadius: "10px",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
-        >
-          {modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
-        </button>
-      </div>
+      </ResultadoJogo>
     );
   }
 

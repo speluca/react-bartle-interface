@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ResultadoJogo from "./ResultadoJogo";
 
 function Explorador({ voltar, aoConcluir, modoEstudo }) {
 
@@ -279,54 +280,60 @@ function Explorador({ voltar, aoConcluir, modoEstudo }) {
   };
 
   if (jogoFinalizado) {
-
     return (
-
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#0f172a",
-          color: "white",
-          textAlign: "center",
-          padding: "40px"
-        }}
+      <ResultadoJogo
+        emoji="🏆"
+        titulo="Ruínas Restauradas"
+        subtitulo="Você explorou as regiões e recuperou as relíquias digitais!"
+        cor="#4ade80"
+        fundo="linear-gradient(to bottom, #0f172a, #1e293b)"
+        stats={[
+          { icone: "🗺️", label: "Regiões", valor: metricas.regioesVisitadas },
+          { icone: "🏺", label: "Relíquias", valor: metricas.reliquiasEncontradas },
+          { icone: "💡", label: "Desafios", valor: metricas.desafiosConcluidos },
+          { icone: "✅", label: "Acertos", valor: metricas.acertos },
+          { icone: "❌", label: "Erros", valor: metricas.erros },
+          { icone: "🎯", label: "Precisão", valor: `${metricas.precisao}%` }
+        ]}
+        rotuloBotao={modoEstudo ? "Continuar →" : "Voltar ao Hub"}
+        onBotao={modoEstudo ? () => aoConcluir(metricas) : voltar}
       >
-
-        <h1>🏆 RUÍNAS RESTAURADAS</h1>
-
-        <h2>🏺 Relíquias Encontradas</h2>
-
-        {reliquias.map((item, index) => (
-          <p key={index}>{item}</p>
-        ))}
-
-        <h2 style={{ marginTop: "30px" }}>
-          📖 Livro do Explorador
-        </h2>
-
-        {descobertas.map((item, index) => (
-          <p key={index}>{item}</p>
-        ))}
-
-        <h3>
-          Descobertas: {descobertas.length}
-        </h3>
-
-        <button
-          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
+        <div
           style={{
-            marginTop: "30px",
-            padding: "12px 20px",
-            borderRadius: "10px",
-            border: "none",
-            cursor: "pointer"
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "12px",
+            padding: "14px 16px",
+            textAlign: "left"
           }}
         >
-          {modoEstudo ? "Continuar →" : "Voltar ao Hub"}
-        </button>
+          <div style={{ fontWeight: 700, marginBottom: "6px" }}>
+            🏺 Relíquias encontradas
+          </div>
+          {reliquias.length === 0 ? (
+            <p style={{ opacity: 0.7, margin: 0 }}>Nenhuma.</p>
+          ) : (
+            reliquias.map((item, index) => (
+              <p key={index} style={{ margin: "2px 0" }}>
+                {item}
+              </p>
+            ))
+          )}
 
-      </div>
-
+          <div style={{ fontWeight: 700, margin: "12px 0 6px" }}>
+            📖 Livro do Explorador
+          </div>
+          {descobertas.length === 0 ? (
+            <p style={{ opacity: 0.7, margin: 0 }}>Nenhuma descoberta.</p>
+          ) : (
+            descobertas.map((item, index) => (
+              <p key={index} style={{ margin: "2px 0" }}>
+                ✨ {item}
+              </p>
+            ))
+          )}
+        </div>
+      </ResultadoJogo>
     );
   }
   return (

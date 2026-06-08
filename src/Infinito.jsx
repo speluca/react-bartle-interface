@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import ResultadoJogo from "./ResultadoJogo";
 
 // dificuldade: cada nível tem seus bits e um conjunto de valores possíveis.
 // O jogador sobe de nível assim que esgota (sem repetir) os valores do nível.
@@ -205,57 +206,25 @@ function Infinito({ voltar, aoConcluir, modoEstudo }) {
   // 🏁 TELA FINAL
   if (jogoFinalizado) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          boxSizing: "border-box",
-          overflow: "auto",
-          background: "linear-gradient(to bottom, #0f172a, #1e293b)",
-          color: "white",
-          padding: "40px",
-          textAlign: "center"
-        }}
-      >
-        <h1>🏆 Transmissão Restaurada</h1>
-        <p style={{ opacity: 0.85, marginBottom: "20px" }}>
-          O tempo acabou! Veja o seu desempenho na Torre da Transmissão.
-        </p>
-
-        <div
-          style={{
-            maxWidth: "600px",
-            margin: "0 auto",
-            textAlign: "left",
-            background: "rgba(255,255,255,0.08)",
-            padding: "25px",
-            borderRadius: "15px"
-          }}
-        >
-          <h3>🏢 Andar Máximo: {andarMaximo}</h3>
-          <h3>🧩 Módulos Concluídos: {modulosConcluidos}</h3>
-          <h3>✅ Acertos: {acertos}</h3>
-          <h3>❌ Erros: {erros}</h3>
-          <h3>🎯 Precisão: {precisao}%</h3>
-          <h3>🔥 Maior Sequência: {maiorSequencia}</h3>
-          <h3>⚡ Energia Final: {energia}/{ENERGIA_MAX}</h3>
-          <h3>📊 Energia Média: {energiaMedia}</h3>
-          <h3>⏱ Tempo da Sessão: {TEMPO_TOTAL}s</h3>
-        </div>
-
-        <button
-          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
-          style={{
-            marginTop: "25px",
-            padding: "12px 20px",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
-        >
-          {modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
-        </button>
-      </div>
+      <ResultadoJogo
+        emoji="🏆"
+        titulo="Transmissão Restaurada"
+        subtitulo="O tempo acabou! Veja o seu desempenho na torre."
+        cor="#38bdf8"
+        fundo="linear-gradient(to bottom, #0f172a, #1e293b)"
+        stats={[
+          { icone: "🏢", label: "Andar máximo", valor: andarMaximo },
+          { icone: "🧩", label: "Módulos", valor: modulosConcluidos },
+          { icone: "✅", label: "Acertos", valor: acertos },
+          { icone: "❌", label: "Erros", valor: erros },
+          { icone: "🎯", label: "Precisão", valor: `${precisao}%` },
+          { icone: "🔥", label: "Maior sequência", valor: maiorSequencia },
+          { icone: "⚡", label: "Energia final", valor: `${energia}/${ENERGIA_MAX}` },
+          { icone: "📊", label: "Energia média", valor: energiaMedia }
+        ]}
+        rotuloBotao={modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
+        onBotao={modoEstudo ? () => aoConcluir(metricas) : voltar}
+      />
     );
   }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ResultadoJogo from "./ResultadoJogo";
 
 // pesos de um byte (mostramos só os bits usados no desafio)
 const PESOS = [128, 64, 32, 16, 8, 4, 2, 1];
@@ -195,68 +196,30 @@ function Competidor({ voltar, aoConcluir, modoEstudo }) {
 
   // 🏁 TELA FINAL
   if (jogoFinalizado) {
+    const venceu = vidas > 0;
     return (
-      <div
-        style={{
-          height: "100vh",
-          boxSizing: "border-box",
-          overflow: "auto",
-          background: "linear-gradient(to bottom, #020617, #0f172a)",
-          color: "#e2e8f0",
-          padding: "40px",
-          textAlign: "center",
-          fontFamily: "monospace"
-        }}
-      >
-        {vidas > 0 ? (
-          <>
-            <h1 style={{ color: "#4ade80" }}>🏆 INVASÃO COMPLETA</h1>
-            <p style={{ opacity: 0.85, marginBottom: "20px" }}>
-              Você quebrou todos os firewalls! Veja o seu desempenho como hacker.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 style={{ color: "#f87171" }}>💀 ACESSO BLOQUEADO</h1>
-            <p style={{ opacity: 0.85, marginBottom: "20px" }}>
-              Suas vidas acabaram. Veja o seu desempenho como hacker.
-            </p>
-          </>
-        )}
-
-        <div
-          style={{
-            maxWidth: "600px",
-            margin: "0 auto",
-            textAlign: "left",
-            background: "rgba(34,197,94,0.08)",
-            border: "1px solid rgba(34,197,94,0.3)",
-            padding: "25px",
-            borderRadius: "15px"
-          }}
-        >
-          <h3>🏆 Pontuação Final: {pontos}</h3>
-          <h3>✅ Acertos: {acertos}</h3>
-          <h3>❌ Erros: {erros}</h3>
-          <h3>🎯 Precisão: {precisao}%</h3>
-          <h3>🔥 Maior Streak: {maiorStreak}</h3>
-          <h3>⏱ Tempo Médio de Resposta: {tempoMedio}s</h3>
-        </div>
-
-        <button
-          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
-          style={{
-            marginTop: "25px",
-            padding: "12px 20px",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
-        >
-          {modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
-        </button>
-      </div>
+      <ResultadoJogo
+        emoji={venceu ? "🏆" : "💀"}
+        titulo={venceu ? "Invasão Completa" : "Acesso Bloqueado"}
+        subtitulo={
+          venceu
+            ? "Você quebrou todos os firewalls!"
+            : "Suas vidas acabaram — mas olha o seu desempenho."
+        }
+        cor={venceu ? "#4ade80" : "#f87171"}
+        fundo="linear-gradient(to bottom, #020617, #0f172a)"
+        fonte="monospace"
+        stats={[
+          { icone: "🏆", label: "Pontuação", valor: pontos },
+          { icone: "🔥", label: "Maior streak", valor: maiorStreak },
+          { icone: "✅", label: "Acertos", valor: acertos },
+          { icone: "❌", label: "Erros", valor: erros },
+          { icone: "🎯", label: "Precisão", valor: `${precisao}%` },
+          { icone: "⏱", label: "Tempo médio", valor: `${tempoMedio}s` }
+        ]}
+        rotuloBotao={modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
+        onBotao={modoEstudo ? () => aoConcluir(metricas) : voltar}
+      />
     );
   }
 
