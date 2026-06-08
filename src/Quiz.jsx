@@ -84,7 +84,7 @@ function gerarPergunta(bits, evitar) {
   };
 }
 
-function Competidor({ voltar }) {
+function Competidor({ voltar, aoConcluir, modoEstudo }) {
 
   const VIDAS_INICIAIS = 3;
   const TOTAL_FIREWALLS = 8; // limite de desafios por sessão
@@ -181,6 +181,18 @@ function Competidor({ voltar }) {
           temposResposta.length
         ).toFixed(1);
 
+  // métricas reportadas ao concluir o jogo (estudo)
+  const metricas = {
+    acertos,
+    erros,
+    precisao,
+    maiorStreak,
+    pontos,
+    tempoMedioResposta: Number(tempoMedio),
+    totalFirewalls: TOTAL_FIREWALLS,
+    venceu: vidas > 0
+  };
+
   // 🏁 TELA FINAL
   if (jogoFinalizado) {
     return (
@@ -232,7 +244,7 @@ function Competidor({ voltar }) {
         </div>
 
         <button
-          onClick={voltar}
+          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
           style={{
             marginTop: "25px",
             padding: "12px 20px",
@@ -242,7 +254,7 @@ function Competidor({ voltar }) {
             fontWeight: "bold"
           }}
         >
-          ⬅ Voltar ao Hub
+          {modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
         </button>
       </div>
     );
@@ -265,7 +277,7 @@ function Competidor({ voltar }) {
       {/* flash vermelho de erro */}
       {erroFlash > 0 && (
         <div
-          key={erroFlash}
+          key={`flash-${erroFlash}`}
           style={{
             position: "fixed",
             inset: 0,
@@ -278,24 +290,26 @@ function Competidor({ voltar }) {
         />
       )}
 
-      <button
-        onClick={voltar}
-        style={{
-          padding: "8px 16px",
-          borderRadius: "10px",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: "12px",
-          fontWeight: "bold",
-          background: "#e2e8f0",
-          color: "#111"
-        }}
-      >
-        ⬅ Voltar
-      </button>
+      {!modoEstudo && (
+        <button
+          onClick={voltar}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer",
+            marginBottom: "12px",
+            fontWeight: "bold",
+            background: "#e2e8f0",
+            color: "#111"
+          }}
+        >
+          ⬅ Voltar
+        </button>
+      )}
 
       <div
-        key={erroFlash}
+        key={`conteudo-${erroFlash}`}
         style={{
           maxWidth: "720px",
           margin: "0 auto",

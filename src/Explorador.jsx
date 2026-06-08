@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-function Explorador({ voltar }) {
+function Explorador({ voltar, aoConcluir, modoEstudo }) {
 
   const [regiaoAtual, setRegiaoAtual] = useState(1);
   const [desbloqueadas, setDesbloqueadas] = useState([1]);
@@ -14,6 +14,12 @@ function Explorador({ voltar }) {
   const [reliquias, setReliquias] = useState([]);
   const [descobertas, setDescobertas] = useState([]);
   const [jogoFinalizado, setJogoFinalizado] = useState(false);
+
+  // 📊 instrumentação de métricas
+  const [erros, setErros] = useState(0); // vezes que o valor passou do objetivo
+  const [temposPorArea, setTemposPorArea] = useState([]);
+  const inicioRegiaoRef = useRef(0);
+  const acimaRef = useRef(false); // controla a contagem de "passou do alvo"
 
     const historias = {
     1: {
@@ -71,6 +77,10 @@ function Explorador({ voltar }) {
     setQuantidade(qtd);
     setPartes(Array(qtd).fill(false));
 
+    // marca o início do tempo desta área e zera o controle de overshoot
+    inicioRegiaoRef.current = Date.now();
+    acimaRef.current = false;
+
   }, [regiaoAtual]);
 
   // lógica principal
@@ -92,11 +102,28 @@ function Explorador({ voltar }) {
     `💻 ${binarioAtual}₂ = ${decimalAtual}`
   );
 
+  // conta "passou do alvo" uma vez por vez que ultrapassa o objetivo
+  if (decimalAtual > objetivos[regiaoAtual]) {
+    if (!acimaRef.current) {
+      acimaRef.current = true;
+      setErros(e => e + 1);
+    }
+  } else {
+    acimaRef.current = false;
+  }
+
   if (decimalAtual === objetivos[regiaoAtual]) {
 
     setMensagem(
       `✅ Correto! ${binarioAtual}₂ = ${decimalAtual}`
     );
+
+    // registra o tempo gasto nesta área
+    const tempoArea = (Date.now() - inicioRegiaoRef.current) / 1000;
+    setTemposPorArea(prev => [
+      ...prev,
+      { regiao: regiaoAtual, tempo: tempoArea }
+    ]);
 
     if (
       !descobertas.includes(
@@ -230,6 +257,27 @@ function Explorador({ voltar }) {
     0
   );
 
+  // métricas reportadas ao concluir o jogo (estudo)
+  const acertosExplorador = descobertas.length;
+  const totalTentativasExplorador = acertosExplorador + erros;
+  const precisaoExplorador =
+    totalTentativasExplorador === 0
+      ? 0
+      : Math.round((acertosExplorador / totalTentativasExplorador) * 100);
+
+  const metricas = {
+    regioesVisitadas: desbloqueadas.length,
+    reliquiasEncontradas: reliquias.length,
+    desafiosConcluidos: descobertas.length,
+    acertos: acertosExplorador,
+    erros,
+    precisao: precisaoExplorador,
+    tempoPorArea: temposPorArea,
+    tempoTotal: Number(
+      temposPorArea.reduce((a, t) => a + t.tempo, 0).toFixed(1)
+    )
+  };
+
   if (jogoFinalizado) {
 
     return (
@@ -265,7 +313,7 @@ function Explorador({ voltar }) {
         </h3>
 
         <button
-          onClick={voltar}
+          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
           style={{
             marginTop: "30px",
             padding: "12px 20px",
@@ -274,7 +322,7 @@ function Explorador({ voltar }) {
             cursor: "pointer"
           }}
         >
-          Voltar ao Hub
+          {modoEstudo ? "Continuar →" : "Voltar ao Hub"}
         </button>
 
       </div>
@@ -291,21 +339,23 @@ function Explorador({ voltar }) {
     }}
   >
 
-    <button
-      onClick={voltar}
-      style={{
-        padding: "12px 20px",
-        borderRadius: "12px",
-        border: "none",
-        cursor: "pointer",
-        marginBottom: "20px",
-        fontWeight: "bold",
-        background: "white",
-        color: "#111"
-      }}
-    >
-      ⬅ Voltar
-    </button>
+    {!modoEstudo && (
+      <button
+        onClick={voltar}
+        style={{
+          padding: "12px 20px",
+          borderRadius: "12px",
+          border: "none",
+          cursor: "pointer",
+          marginBottom: "20px",
+          fontWeight: "bold",
+          background: "white",
+          color: "#111"
+        }}
+      >
+        ⬅ Voltar
+      </button>
+    )}
 
       <div
   style={{

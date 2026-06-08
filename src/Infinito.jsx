@@ -52,7 +52,7 @@ function proximoDesafio(nivelAtual, usadosAtual, alvoAtual) {
   };
 }
 
-function Infinito({ voltar }) {
+function Infinito({ voltar, aoConcluir, modoEstudo }) {
 
   const TEMPO_TOTAL = 30; // cronômetro fixo, não pode aumentar
   const ENERGIA_MAX = 10;
@@ -189,6 +189,19 @@ function Infinito({ voltar }) {
       ? energia
       : (energiaSoma / energiaAmostras).toFixed(1);
 
+  // métricas reportadas ao concluir o jogo (estudo)
+  const metricas = {
+    acertos,
+    erros,
+    precisao,
+    andarMaximo,
+    modulosConcluidos,
+    energiaFinal: energia,
+    energiaMedia: Number(energiaMedia),
+    maiorSequencia,
+    tempoSessao: TEMPO_TOTAL
+  };
+
   // 🏁 TELA FINAL
   if (jogoFinalizado) {
     return (
@@ -230,7 +243,7 @@ function Infinito({ voltar }) {
         </div>
 
         <button
-          onClick={voltar}
+          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
           style={{
             marginTop: "25px",
             padding: "12px 20px",
@@ -240,7 +253,7 @@ function Infinito({ voltar }) {
             fontWeight: "bold"
           }}
         >
-          ⬅ Voltar ao Hub
+          {modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
         </button>
       </div>
     );
@@ -258,21 +271,23 @@ function Infinito({ voltar }) {
         padding: "12px 16px"
       }}
     >
-      <button
-        onClick={voltar}
-        style={{
-          padding: "8px 16px",
-          borderRadius: "10px",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: "10px",
-          fontWeight: "bold",
-          background: "white",
-          color: "#111"
-        }}
-      >
-        ⬅ Voltar
-      </button>
+      {!modoEstudo && (
+        <button
+          onClick={voltar}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer",
+            marginBottom: "10px",
+            fontWeight: "bold",
+            background: "white",
+            color: "#111"
+          }}
+        >
+          ⬅ Voltar
+        </button>
+      )}
 
       <div
         style={{

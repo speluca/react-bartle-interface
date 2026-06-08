@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function Construtor({ voltar }) {
+function Construtor({ voltar, aoConcluir, modoEstudo }) {
 
   // 🧑‍🤝‍🧑 NPCs da comunidade digital (perfil Socializador)
   const npcs = [
@@ -189,6 +189,17 @@ function Construtor({ voltar }) {
           (solucoesEficientes / historicoMissoes.length) * 100
         );
 
+  // métricas reportadas ao concluir o jogo (estudo)
+  const metricas = {
+    artefatosConcluidos: artefatosConcluidos.length,
+    missoesAtendidas: historicoMissoes.length,
+    acertos,
+    erros,
+    tentativas,
+    tempoMedioConstrucao: Number(tempoMedio),
+    eficiencia
+  };
+
   // 🏁 TELA FINAL
   if (jogoFinalizado) {
     return (
@@ -239,7 +250,7 @@ function Construtor({ voltar }) {
         </div>
 
         <button
-          onClick={voltar}
+          onClick={modoEstudo ? () => aoConcluir(metricas) : voltar}
           style={{
             marginTop: "30px",
             padding: "12px 20px",
@@ -249,7 +260,7 @@ function Construtor({ voltar }) {
             fontWeight: "bold"
           }}
         >
-          ⬅ Voltar ao Hub
+          {modoEstudo ? "Continuar →" : "⬅ Voltar ao Hub"}
         </button>
       </div>
     );
@@ -267,21 +278,23 @@ function Construtor({ voltar }) {
         padding: "12px 16px"
       }}
     >
-      <button
-        onClick={voltar}
-        style={{
-          padding: "8px 16px",
-          borderRadius: "10px",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: "10px",
-          fontWeight: "bold",
-          background: "white",
-          color: "#111"
-        }}
-      >
-        ⬅ Voltar
-      </button>
+      {!modoEstudo && (
+        <button
+          onClick={voltar}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer",
+            marginBottom: "10px",
+            fontWeight: "bold",
+            background: "white",
+            color: "#111"
+          }}
+        >
+          ⬅ Voltar
+        </button>
+      )}
 
       <div
         style={{

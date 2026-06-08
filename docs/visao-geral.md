@@ -107,13 +107,28 @@ entrada → login → Hub (escolhe qualquer jogo) → joga → volta ao Hub → 
 - Modo admin com acesso livre.
 - A sessão é montada em memória e, ao final, **registrada no console** (`Sessão concluída: {...}`).
 
-### ⏳ Etapa 2 — Captura de métricas dos jogos (pendente)
-- Trocar o fim de cada jogo por `onConcluir(métricas)` para alimentar `sessao.resultados`.
-- **Esconder o botão "Voltar"** durante os jogos no modo estudo (hoje ele **avança/pula** o jogo).
-- Instrumentar o **Explorador**, que ainda não registra acertos/erros/tempo por área.
+### ✅ Etapa 2 — Captura de métricas dos jogos (concluída)
+- Cada jogo recebe `aoConcluir(metricas)` e `modoEstudo`; ao terminar, reporta suas métricas
+  para `sessao.resultados[jogo]` e avança (botão "Continuar →").
+- O botão **"Voltar" fica oculto** durante os jogos no modo estudo (impede sair do fluxo);
+  no modo admin continua visível ("Voltar ao Hub").
+- O **Explorador** foi instrumentado: regiões visitadas, relíquias, desafios concluídos,
+  acertos, erros (overshoot), precisão e tempo por área.
+- Métricas por jogo (chaves em `sessao.resultados`):
+  - **quiz:** acertos, erros, precisao, maiorStreak, pontos, tempoMedioResposta, totalFirewalls, venceu
+  - **infinito:** acertos, erros, precisao, andarMaximo, modulosConcluidos, energiaFinal, energiaMedia, maiorSequencia, tempoSessao
+  - **explorador:** regioesVisitadas, reliquiasEncontradas, desafiosConcluidos, acertos, erros, precisao, tempoPorArea, tempoTotal
+  - **construtor:** artefatosConcluidos, missoesAtendidas, acertos, erros, tentativas, tempoMedioConstrucao, eficiencia
 
-### ⏳ Etapa 3 — Persistência (Supabase)
-- Tabelas `sessao`, `resultado_jogo`, `codigos`; gravar online; validar código; buffer offline.
+### ✅ Etapa 3 — Persistência (Supabase) (concluída — requer rodar o SQL)
+- Cliente em [supabaseClient.js](../src/supabaseClient.js) (chaves anon públicas, protegidas por RLS).
+- Camada de dados em [dados.js](../src/dados.js): grava a sessão de forma **incremental**
+  (cria no consentimento, atualiza demográfico/pré/pós, insere 1 linha por jogo) com
+  **buffer offline** (reenvia o que falhar quando a conexão voltar).
+- **Ação necessária:** rodar [docs/supabase.sql](./supabase.sql) no SQL Editor do Supabase
+  para criar as tabelas `sessao` e `resultado_jogo` e as políticas de RLS.
+- Por ora o código é **aceito sem validação** (qualquer texto) — o cruzamento com o Bartle
+  externo é feito por `codigo` na planilha. Validação por lista fica para quando definirmos.
 
 ### ⏳ Etapa 4 — Admin
 - Login real (Supabase Auth), geração de lote de códigos, export CSV.
@@ -121,11 +136,13 @@ entrada → login → Hub (escolhe qualquer jogo) → joga → volta ao Hub → 
 ---
 
 ## Limitações conhecidas (estado atual)
-- **Sem backend:** nada é salvo de verdade ainda — só `console.log` ao final do fluxo.
-- **Login admin é stub:** aceita qualquer usuário/senha.
-- **Métricas dos jogos não são coletadas** (Etapa 2).
-- Durante um jogo, o botão **"Voltar" avança o fluxo** (em vez de bloquear) — será ajustado na Etapa 2.
-- Lint aponta 2 itens **pré-existentes** no [Explorador.jsx](../src/Explorador.jsx) (`animandoMapa` sem uso e `setState` dentro de effect) — serão tratados junto com a instrumentação na Etapa 2.
+- **As tabelas precisam existir:** rode [docs/supabase.sql](./supabase.sql) no Supabase antes
+  de coletar. Sem isso, os envios falham e ficam no buffer offline (e há avisos no console).
+- **Login admin é stub:** aceita qualquer usuário/senha (Etapa 4).
+- **Sem leitura/exportação no app ainda:** os dados aparecem no painel do Supabase
+  (Table Editor / export CSV). Tela de admin + login real são a Etapa 4.
+- Lint aponta 2 itens `set-state-in-effect` no [Explorador.jsx](../src/Explorador.jsx) (estruturais,
+  da forma como o jogo foi escrito) — não quebram nada; eventual refatoração futura.
 
 ---
 

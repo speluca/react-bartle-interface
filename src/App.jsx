@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  criarSessao,
+  registrarRecusa,
+  atualizarSessao,
+  registrarJogo,
+  reenviarPendentes
+} from "./dados";
 import Hub from "./Hub";
 import Quiz from "./Quiz";
 import Explorador from "./Explorador";
@@ -42,11 +49,11 @@ const sessaoInicial = {
   concluido: false
 };
 
-function renderJogo(jogo, voltar) {
-  if (jogo === "quiz") return <Quiz voltar={voltar} />;
-  if (jogo === "infinito") return <Infinito voltar={voltar} />;
-  if (jogo === "explorador") return <Explorador voltar={voltar} />;
-  if (jogo === "construtor") return <Construtor voltar={voltar} />;
+function renderJogo(jogo, props) {
+  if (jogo === "quiz") return <Quiz {...props} />;
+  if (jogo === "infinito") return <Infinito {...props} />;
+  if (jogo === "explorador") return <Explorador {...props} />;
+  if (jogo === "construtor") return <Construtor {...props} />;
   return null;
 }
 
@@ -57,6 +64,13 @@ function App() {
   const [sessao, setSessao] = useState(sessaoInicial);
 
   const [jogoAdmin, setJogoAdmin] = useState("hub"); // admin: escolha livre
+
+  // reenvia dados pendentes ao carregar e quando a conexão voltar
+  useEffect(() => {
+    reenviarPendentes();
+    window.addEventListener("online", reenviarPendentes);
+    return () => window.removeEventListener("online", reenviarPendentes);
+  }, []);
 
   // ---- entrada ----
   function iniciarParticipante(codigo) {
@@ -84,25 +98,38 @@ function App() {
   // ---- fluxo do participante ----
   function aceitarTcle() {
     setSessao((s) => ({ ...s, consentiu: true }));
+    // cria a linha da sessão no Supabase (consentimento + ordem dos jogos)
+    criarSessao(sessao.codigo, sessao.ordemJogos, true);
     setEtapa("demografico");
   }
 
   function recusarTcle() {
     setSessao((s) => ({ ...s, consentiu: false }));
+    registrarRecusa(sessao.codigo);
     setEtapa("recusou");
   }
 
   function concluirDemografico(dados) {
     setSessao((s) => ({ ...s, demografico: dados }));
+    atualizarSessao(sessao.codigo, { demografico: dados });
     setEtapa("preTeste");
   }
 
   function concluirPreTeste(score, respostas) {
     setSessao((s) => ({ ...s, preScore: score, preRespostas: respostas }));
+    atualizarSessao(sessao.codigo, {
+      pre_score: score,
+      pre_respostas: respostas
+    });
     setEtapa("transicao");
   }
 
-  function avancarJogo() {
+  function concluirJogo(jogo, metricas) {
+    setSessao((s) => ({
+      ...s,
+      resultados: { ...s.resultados, [jogo]: metricas }
+    }));
+    registrarJogo(sessao.codigo, jogo, metricas);
     if (indiceJogo < sessao.ordemJogos.length - 1) {
       setIndiceJogo((i) => i + 1);
     } else {
@@ -118,7 +145,11 @@ function App() {
       concluido: true
     };
     setSessao(final);
-    // Etapa 1: sem backend ainda — apenas registra no console para conferência.
+    atualizarSessao(sessao.codigo, {
+      pos_score: score,
+      pos_respostas: respostas,
+      concluido: true
+    });
     console.log("Sessão concluída:", final);
     setEtapa("fim");
   }
@@ -145,7 +176,10 @@ function App() {
           </>
         )}
         {jogoAdmin !== "hub" &&
-          renderJogo(jogoAdmin, () => setJogoAdmin("hub"))}
+          renderJogo(jogoAdmin, {
+            modoEstudo: false,
+            voltar: () => setJogoAdmin("hub")
+          })}
       </div>
     );
   }
@@ -176,7 +210,10 @@ function App() {
     }
     if (etapa === "jogos") {
       const jogo = sessao.ordemJogos[indiceJogo];
-      return renderJogo(jogo, avancarJogo);
+      return renderJogo(jogo, {
+        modoEstudo: true,
+        aoConcluir: (metricas) => concluirJogo(jogo, metricas)
+      });
     }
     if (etapa === "posTeste") {
       return (
