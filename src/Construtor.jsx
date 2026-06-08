@@ -27,28 +27,6 @@ function Construtor({ voltar }) {
         "A praça está iluminada outra vez! Hoje vai ter encontro da galera graças a você. ✨"
     },
     {
-      nome: "Vovó Cíbele",
-      emoji: "👵",
-      artefato: "Rádio Comunitário",
-      iconeArtefato: "📻",
-      energia: 10,
-      pedido:
-        "Meu querido, o rádio que conecta toda a cidade parou. Um núcleo de 10 unidades faria ele voltar a transmitir as notícias dos vizinhos.",
-      agradecimento:
-        "Que alegria! Já posso ouvir os recados de todo mundo de novo. Você é um amor! 🥰"
-    },
-    {
-      nome: "Pixel",
-      emoji: "🐱",
-      artefato: "Portão da Horta",
-      iconeArtefato: "🌱",
-      energia: 5,
-      pedido:
-        "Miau! O portão automático da horta comunitária travou. Com um núcleo de 5 unidades a gente reabre e divide os alimentos com todos!",
-      agradecimento:
-        "O portão abriu! Agora todos podem colher juntos. Obrigado por cuidar da gente! 🌻"
-    },
-    {
       nome: "Mestre Byte",
       emoji: "🧙",
       artefato: "Servidor da Festa",
@@ -71,6 +49,7 @@ function Construtor({ voltar }) {
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState(""); // "ok" | "erro" | ""
   const [jogoFinalizado, setJogoFinalizado] = useState(false);
+  const [travado, setTravado] = useState(false); // bloqueia durante a animação de sucesso
 
   // 📊 dados coletados
   const [artefatosConcluidos, setArtefatosConcluidos] = useState([]);
@@ -94,7 +73,7 @@ function Construtor({ voltar }) {
     .join("");
 
   function toggleComponente(index) {
-    if (jogoFinalizado) return;
+    if (jogoFinalizado || travado) return;
 
     const novo = [...selecionados];
     novo[index] = !novo[index];
@@ -105,11 +84,13 @@ function Construtor({ voltar }) {
 
   // 🔨 forjar o núcleo (tentativa de ativar o artefato)
   function forjar() {
-    if (jogoFinalizado) return;
+    if (jogoFinalizado || travado) return;
 
     setTentativas((prev) => prev + 1);
 
     if (valorAtual === npc.energia) {
+
+      setTravado(true);
 
       const tempoConstrucao =
         (Date.now() - inicioMissao) / 1000;
@@ -150,10 +131,11 @@ function Construtor({ voltar }) {
           setMensagem("");
           setTipoMensagem("");
           setInicioMissao(Date.now());
+          setTravado(false);
         } else {
           setJogoFinalizado(true);
         }
-      }, 2600);
+      }, 1500);
 
     } else {
       setErros((prev) => prev + 1);

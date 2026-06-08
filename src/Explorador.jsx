@@ -176,12 +176,15 @@ function Explorador({ voltar }) {
 
       setAnimandoMapa(false);
 
-    }, 2000);
+    }, 1200);
   }
 
 }, [partes]);
   //aqui
   function toggleParte(index) {
+
+    // bloqueia interação durante a transição de região (evita avanço duplo)
+    if (animandoMapa) return;
 
     const novo = [...partes];
 

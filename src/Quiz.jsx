@@ -39,11 +39,19 @@ function gerarVizinhos(valor, bits) {
   return [...conjunto];
 }
 
-// cada desafio é um "firewall" a ser quebrado
-function gerarPergunta(bits) {
+// cada desafio é um "firewall" a ser quebrado.
+// `evitar` = valor do desafio anterior, para não repetir em sequência.
+function gerarPergunta(bits, evitar) {
   const max = (1 << bits) - 1;
   const tipo = Math.random() < 0.5 ? "decode" : "encode";
-  const valor = Math.floor(Math.random() * max) + 1; // 1..max
+
+  let valor = Math.floor(Math.random() * max) + 1; // 1..max
+  if (evitar !== undefined && max > 1) {
+    while (valor === evitar) {
+      valor = Math.floor(Math.random() * max) + 1;
+    }
+  }
+
   const binario = paraBinario(valor, bits);
   const pesos = PESOS.slice(-bits);
 
@@ -79,6 +87,7 @@ function gerarPergunta(bits) {
 function Competidor({ voltar }) {
 
   const VIDAS_INICIAIS = 3;
+  const TOTAL_FIREWALLS = 8; // limite de desafios por sessão
 
   const [vidas, setVidas] = useState(VIDAS_INICIAIS);
   const [pontos, setPontos] = useState(0);
@@ -102,7 +111,7 @@ function Competidor({ voltar }) {
   }, [pergunta]);
 
   function proximaPergunta(resolvidos) {
-    setPergunta(gerarPergunta(nivelDeBits(resolvidos)));
+    setPergunta(gerarPergunta(nivelDeBits(resolvidos), pergunta.valor));
     setTipoMensagem("");
     setMensagem("");
   }
@@ -114,6 +123,7 @@ function Competidor({ voltar }) {
 
     const acertou = opcao === pergunta.resposta;
     const resolvidos = acertos + erros + 1; // firewalls enfrentados após este
+    const atingiuLimite = resolvidos >= TOTAL_FIREWALLS;
 
     if (acertou) {
       const novaStreak = streak + 1;
@@ -125,7 +135,12 @@ function Competidor({ voltar }) {
 
       setTipoMensagem("ok");
       setMensagem(`✔ Firewall quebrado! Combo x${novaStreak}`);
-      proximaPergunta(resolvidos);
+
+      if (atingiuLimite) {
+        setJogoFinalizado(true);
+      } else {
+        proximaPergunta(resolvidos);
+      }
     } else {
       const novasVidas = vidas - 1;
 
@@ -137,6 +152,8 @@ function Competidor({ voltar }) {
 
       if (novasVidas <= 0) {
         setMensagem("💀 Sistema bloqueou o acesso!");
+        setJogoFinalizado(true);
+      } else if (atingiuLimite) {
         setJogoFinalizado(true);
       } else {
         setMensagem(
@@ -179,10 +196,21 @@ function Competidor({ voltar }) {
           fontFamily: "monospace"
         }}
       >
-        <h1 style={{ color: "#f87171" }}>💀 ACESSO BLOQUEADO</h1>
-        <p style={{ opacity: 0.85, marginBottom: "20px" }}>
-          Suas vidas acabaram. Veja o seu desempenho como hacker.
-        </p>
+        {vidas > 0 ? (
+          <>
+            <h1 style={{ color: "#4ade80" }}>🏆 INVASÃO COMPLETA</h1>
+            <p style={{ opacity: 0.85, marginBottom: "20px" }}>
+              Você quebrou todos os firewalls! Veja o seu desempenho como hacker.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 style={{ color: "#f87171" }}>💀 ACESSO BLOQUEADO</h1>
+            <p style={{ opacity: 0.85, marginBottom: "20px" }}>
+              Suas vidas acabaram. Veja o seu desempenho como hacker.
+            </p>
+          </>
+        )}
 
         <div
           style={{
@@ -344,7 +372,7 @@ function Competidor({ voltar }) {
           }}
         >
           <div style={{ fontSize: "0.85rem", opacity: 0.8, marginBottom: "10px" }}>
-            🔒 Firewall #{acertos + erros + 1}
+            🔒 Firewall {acertos + erros + 1}/{TOTAL_FIREWALLS}
           </div>
 
           {pergunta.tipo === "decode" ? (
