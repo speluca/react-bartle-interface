@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Tela from "./Tela";
 import { botaoPrimario, botaoSecundario, botaoDesabilitado } from "./estilos";
+import { loginAdmin } from "./dados";
 
 const inputStyle = {
   width: "100%",
@@ -20,6 +21,7 @@ function Entrada({ onParticipante, onAdmin }) {
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [entrando, setEntrando] = useState(false);
 
   function iniciar() {
     const c = codigo.trim();
@@ -30,13 +32,22 @@ function Entrada({ onParticipante, onAdmin }) {
     onParticipante(c);
   }
 
-  function entrarAdmin() {
-    // Etapa 1: login ainda é um stub (autenticação real virá com o Supabase).
+  async function entrarAdmin() {
     if (!usuario.trim() || !senha.trim()) {
-      setErro("Preencha usuário e senha.");
+      setErro("Preencha e-mail e senha.");
       return;
     }
-    onAdmin({ usuario: usuario.trim() });
+    setEntrando(true);
+    setErro("");
+    try {
+      await loginAdmin(usuario.trim(), senha);
+      onAdmin();
+    } catch (e) {
+      setErro("Login inválido. Verifique e-mail e senha.");
+      console.warn("[admin] login falhou:", e?.message || e);
+    } finally {
+      setEntrando(false);
+    }
   }
 
   return (
@@ -97,8 +108,9 @@ function Entrada({ onParticipante, onAdmin }) {
         </>
       ) : (
         <>
-          <label style={{ fontWeight: 600 }}>Usuário</label>
+          <label style={{ fontWeight: 600 }}>E-mail</label>
           <input
+            type="email"
             style={inputStyle}
             value={usuario}
             onChange={(e) => {
@@ -128,10 +140,15 @@ function Entrada({ onParticipante, onAdmin }) {
           )}
 
           <button
-            style={{ ...botaoPrimario, width: "100%", marginTop: "18px" }}
+            style={{
+              ...(entrando ? botaoDesabilitado : botaoPrimario),
+              width: "100%",
+              marginTop: "18px"
+            }}
+            disabled={entrando}
             onClick={entrarAdmin}
           >
-            Entrar
+            {entrando ? "Entrando..." : "Entrar"}
           </button>
 
           <button
@@ -153,7 +170,7 @@ function Entrada({ onParticipante, onAdmin }) {
           </button>
 
           <p style={{ opacity: 0.55, fontSize: "0.75rem", marginTop: "16px" }}>
-            * Login provisório (sem autenticação real ainda).
+            Acesso restrito a administradores do estudo.
           </p>
         </>
       )}

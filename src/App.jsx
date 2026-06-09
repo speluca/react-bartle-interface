@@ -4,9 +4,11 @@ import {
   registrarRecusa,
   atualizarSessao,
   registrarJogo,
-  reenviarPendentes
+  reenviarPendentes,
+  logoutAdmin
 } from "./dados";
 import Hub from "./Hub";
+import PainelAdmin from "./PainelAdmin";
 import Quiz from "./Quiz";
 import Explorador from "./Explorador";
 import Infinito from "./Infinito";
@@ -86,12 +88,21 @@ function App() {
   }
 
   function entrarAdmin() {
-    setJogoAdmin("hub");
+    setJogoAdmin("painel");
     setModo("admin");
   }
 
   function voltarAoInicio() {
     setSessao(sessaoInicial);
+    setModo("entrada");
+  }
+
+  async function sairAdmin() {
+    try {
+      await logoutAdmin();
+    } catch {
+      // ignora erro de signOut
+    }
     setModo("entrada");
   }
 
@@ -156,12 +167,20 @@ function App() {
 
   // ===== ADMIN =====
   if (modo === "admin") {
+    if (jogoAdmin === "painel") {
+      return (
+        <PainelAdmin
+          onJogar={() => setJogoAdmin("hub")}
+          onSair={sairAdmin}
+        />
+      );
+    }
     return (
       <div>
         {jogoAdmin === "hub" && (
           <>
             <button
-              onClick={voltarAoInicio}
+              onClick={() => setJogoAdmin("painel")}
               style={{
                 ...botaoSecundario,
                 position: "fixed",
@@ -170,7 +189,7 @@ function App() {
                 zIndex: 100
               }}
             >
-              Sair
+              ← Painel
             </button>
             <Hub setModo={setJogoAdmin} />
           </>

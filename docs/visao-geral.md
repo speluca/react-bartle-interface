@@ -130,30 +130,29 @@ entrada → login → Hub (escolhe qualquer jogo) → joga → volta ao Hub → 
 - Por ora o código é **aceito sem validação** (qualquer texto) — o cruzamento com o Bartle
   externo é feito por `codigo` na planilha. Validação por lista fica para quando definirmos.
 
-### ⏳ Etapa 4 — Admin (próxima sessão)
-1. **Login real de admin** via Supabase Auth (`signInWithPassword`) — substitui o stub atual.
-2. **Reativar o RLS do jeito certo** (hoje está **desligado** na `sessao`):
-   - anônimo: INSERT/UPDATE (grava); **sem** SELECT.
-   - admin autenticado: SELECT (lê tudo).
-3. **Painel do admin**: listar `sessao` + `resultado_jogo` e **exportar CSV**.
+### ✅ Etapa 4 — Admin (concluída no código — requer 2 passos manuais)
+- **Login real de admin** via Supabase Auth ([Entrada.jsx](../src/Entrada.jsx) → `loginAdmin`).
+- **Painel do admin** ([PainelAdmin.jsx](../src/PainelAdmin.jsx)): resumo (sessões / concluídas /
+  jogos), tabela de sessões, **export CSV** (sessões e resultados separados) e "Testar jogos".
+- **RLS reescrito** ([docs/supabase.sql](./supabase.sql)): participante (anon+authenticated)
+  só INSERE/ATUALIZA; **leitura (SELECT) só para admin autenticado**.
 
-**Decisões pendentes pra começar:**
-- E-mail do usuário admin (criar em Authentication → Users no Supabase).
-- Formato do CSV: separado (`sessao.csv` + `resultado_jogo.csv`) ou achatado (1 linha/participante).
-- Painel só listar+exportar, ou com filtros/busca.
+**Ações manuais necessárias:**
+1. **Criar o usuário admin** no Supabase: Authentication → Users → **Add user** (e-mail + senha),
+   marcando **Auto Confirm User** (senão não loga).
+2. **Rodar [docs/supabase.sql](./supabase.sql)** de novo (a seção de RLS atualizada reativa o
+   RLS e cria a política de leitura do admin).
 
-⚠️ **Estado atual de segurança:** o RLS da `sessao` foi **desativado** (`alter table sessao
-disable row level security;`) para destravar a gravação. Reativar corretamente é o passo 2
-acima — importante antes de a coleta real ir pro ar com o repositório público.
+Depois: testar **participante** (deve continuar gravando) e **admin** (login → painel → ver/exportar).
 
 ---
 
 ## Limitações conhecidas (estado atual)
-- **As tabelas precisam existir:** rode [docs/supabase.sql](./supabase.sql) no Supabase antes
-  de coletar. Sem isso, os envios falham e ficam no buffer offline (e há avisos no console).
-- **Login admin é stub:** aceita qualquer usuário/senha (Etapa 4).
-- **Sem leitura/exportação no app ainda:** os dados aparecem no painel do Supabase
-  (Table Editor / export CSV). Tela de admin + login real são a Etapa 4.
+- **As tabelas + RLS precisam existir:** rode [docs/supabase.sql](./supabase.sql) no Supabase.
+  Sem o RLS de leitura, o painel do admin não carrega os dados.
+- **Usuário admin precisa ser criado** no Supabase (Authentication → Users, com Auto Confirm).
+- **CSV é separado** (`sessoes.csv` + `resultados.csv`); versão achatada (1 linha/participante)
+  pode ser adicionada se necessário para a análise.
 - Lint aponta 2 itens `set-state-in-effect` no [Explorador.jsx](../src/Explorador.jsx) (estruturais,
   da forma como o jogo foi escrito) — não quebram nada; eventual refatoração futura.
 
