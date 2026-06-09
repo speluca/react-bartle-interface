@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { buscarSessoes, buscarResultados, gerarCSV } from "./dados";
+import {
+  buscarSessoes,
+  buscarResultados,
+  buscarCodigos,
+  gerarCodigos,
+  gerarCSV,
+  gerarCSVAchatado
+} from "./dados";
 import { botaoPrimario, botaoSecundario } from "./estilos";
 
 function baixarCSV(nome, conteudo) {
@@ -28,19 +35,41 @@ const card = {
 function PainelAdmin({ onJogar, onSair }) {
   const [sessoes, setSessoes] = useState([]);
   const [resultados, setResultados] = useState([]);
+  const [codigos, setCodigos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [qtdGerar, setQtdGerar] = useState(10);
+  const [gerando, setGerando] = useState(false);
 
   async function carregar() {
     setErro("");
     try {
-      const [s, r] = await Promise.all([buscarSessoes(), buscarResultados()]);
+      const [s, r, c] = await Promise.all([
+        buscarSessoes(),
+        buscarResultados(),
+        buscarCodigos()
+      ]);
       setSessoes(s);
       setResultados(r);
+      setCodigos(c);
     } catch (e) {
       setErro(e?.message || "Erro ao carregar os dados.");
     } finally {
       setCarregando(false);
+    }
+  }
+
+  async function gerar() {
+    setGerando(true);
+    setErro("");
+    try {
+      await gerarCodigos(Math.max(1, Math.min(500, Number(qtdGerar) || 0)));
+      const c = await buscarCodigos();
+      setCodigos(c);
+    } catch (e) {
+      setErro(e?.message || "Erro ao gerar códigos.");
+    } finally {
+      setGerando(false);
     }
   }
 
@@ -49,6 +78,26 @@ function PainelAdmin({ onJogar, onSair }) {
   }, []);
 
   const concluidas = sessoes.filter((s) => s.concluido).length;
+
+  // resumo pré/pós (apenas sessões com os dois scores)
+  const comScores = sessoes.filter(
+    (s) => s.pre_score != null && s.pos_score != null
+  );
+  const media = (arr, campo) =>
+    arr.length === 0
+      ? null
+      : arr.reduce((a, s) => a + s[campo], 0) / arr.length;
+  const mediaPre = media(comScores, "pre_score");
+  const mediaPos = media(comScores, "pos_score");
+  const ganhoMedio =
+    mediaPre != null && mediaPos != null ? mediaPos - mediaPre : null;
+  const fmt = (v) => (v == null ? "—" : v.toFixed(1));
+  const taxaConclusao =
+    sessoes.length === 0
+      ? "—"
+      : `${Math.round((concluidas / sessoes.length) * 100)}%`;
+
+  const codigosUsados = codigos.filter((c) => c.usado).length;
 
   return (
     <div
@@ -127,6 +176,35 @@ function PainelAdmin({ onJogar, onSair }) {
           <div style={{ opacity: 0.7, fontSize: "0.8rem" }}>Jogos registrados</div>
           <div style={{ fontSize: "1.8rem", fontWeight: 700 }}>{resultados.length}</div>
         </div>
+        <div style={card}>
+          <div style={{ opacity: 0.7, fontSize: "0.8rem" }}>Conclusão</div>
+          <div style={{ fontSize: "1.8rem", fontWeight: 700 }}>{taxaConclusao}</div>
+        </div>
+        <div style={card}>
+          <div style={{ opacity: 0.7, fontSize: "0.8rem" }}>Média pré / pós</div>
+          <div style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+            {fmt(mediaPre)} → {fmt(mediaPos)}
+          </div>
+        </div>
+        <div style={card}>
+          <div style={{ opacity: 0.7, fontSize: "0.8rem" }}>Ganho médio</div>
+          <div
+            style={{
+              fontSize: "1.8rem",
+              fontWeight: 700,
+              color:
+                ganhoMedio == null
+                  ? undefined
+                  : ganhoMedio > 0
+                  ? "#4ade80"
+                  : ganhoMedio < 0
+                  ? "#f87171"
+                  : undefined
+            }}
+          >
+            {ganhoMedio == null ? "—" : `${ganhoMedio > 0 ? "+" : ""}${fmt(ganhoMedio)}`}
+          </div>
+        </div>
       </div>
 
       {/* export */}
@@ -145,6 +223,65 @@ function PainelAdmin({ onJogar, onSair }) {
         >
           ⬇ Resultados por jogo (CSV)
         </button>
+        <button
+          style={botaoPrimario}
+          onClick={() =>
+            baixarCSV("estudo_achatado.csv", gerarCSVAchatado(sessoes, resultados))
+          }
+          disabled={sessoes.length === 0}
+        >
+          ⬇ Tudo achatado (CSV)
+        </button>
+      </div>
+
+      {/* códigos de participação */}
+      <div style={{ ...card, marginBottom: "20px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px"
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 700 }}>🎟️ Códigos de participação</div>
+            <div style={{ opacity: 0.7, fontSize: "0.85rem", marginTop: "2px" }}>
+              {codigos.length} gerados · {codigosUsados} usados
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={qtdGerar}
+              onChange={(e) => setQtdGerar(e.target.value)}
+              style={{
+                width: "80px",
+                padding: "9px 10px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255,255,255,0.18)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#e2e8f0"
+              }}
+            />
+            <button style={botaoSecundario} onClick={gerar} disabled={gerando}>
+              {gerando ? "Gerando..." : "Gerar"}
+            </button>
+            <button
+              style={botaoPrimario}
+              onClick={() =>
+                baixarCSV("codigos.csv", gerarCSV(codigos))
+              }
+              disabled={codigos.length === 0}
+            >
+              ⬇ Códigos (CSV)
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* tabela de sessões */}

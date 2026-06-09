@@ -5,7 +5,8 @@ import {
   atualizarSessao,
   registrarJogo,
   reenviarPendentes,
-  logoutAdmin
+  logoutAdmin,
+  marcarCodigoUsado
 } from "./dados";
 import Hub from "./Hub";
 import PainelAdmin from "./PainelAdmin";
@@ -111,6 +112,7 @@ function App() {
     setSessao((s) => ({ ...s, consentiu: true }));
     // cria a linha da sessão no Supabase (consentimento + ordem dos jogos)
     criarSessao(sessao.codigo, sessao.ordemJogos, true);
+    marcarCodigoUsado(sessao.codigo);
     setEtapa("demografico");
   }
 

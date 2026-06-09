@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Tela from "./Tela";
 import { botaoPrimario, botaoSecundario, botaoDesabilitado } from "./estilos";
-import { loginAdmin } from "./dados";
+import { loginAdmin, validarCodigo } from "./dados";
 
 const inputStyle = {
   width: "100%",
@@ -22,11 +22,20 @@ function Entrada({ onParticipante, onAdmin }) {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [entrando, setEntrando] = useState(false);
+  const [verificando, setVerificando] = useState(false);
 
-  function iniciar() {
+  async function iniciar() {
     const c = codigo.trim();
     if (!c) {
       setErro("Digite o seu código de participação.");
+      return;
+    }
+    setVerificando(true);
+    setErro("");
+    const ok = await validarCodigo(c);
+    setVerificando(false);
+    if (!ok) {
+      setErro("Código inválido. Confira com o pesquisador.");
       return;
     }
     onParticipante(c);
@@ -83,10 +92,15 @@ function Entrada({ onParticipante, onAdmin }) {
           )}
 
           <button
-            style={{ ...botaoPrimario, width: "100%", marginTop: "18px" }}
+            style={{
+              ...(verificando ? botaoDesabilitado : botaoPrimario),
+              width: "100%",
+              marginTop: "18px"
+            }}
+            disabled={verificando}
             onClick={iniciar}
           >
-            Iniciar
+            {verificando ? "Verificando..." : "Iniciar"}
           </button>
 
           <button

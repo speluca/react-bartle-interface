@@ -145,14 +145,27 @@ entrada → login → Hub (escolhe qualquer jogo) → joga → volta ao Hub → 
 
 Depois: testar **participante** (deve continuar gravando) e **admin** (login → painel → ver/exportar).
 
+### ✅ Extras (concluídos)
+- **Validação de código**: a entrada do participante valida o código contra a tabela
+  `codigos` (rejeita inválidos). O admin **gera lotes de códigos** e exporta no painel.
+  (Fail-open: se a tabela `codigos` não existir ainda, não bloqueia.)
+- **Export CSV achatado**: 1 linha por participante (demográfico + métricas de cada jogo em
+  colunas), além dos CSVs separados de sessões e resultados.
+- **Resumo no painel**: total/concluídas, taxa de conclusão, média pré → pós e ganho médio.
+- **Lint**: projeto 100% limpo (refatorado o Explorador para tirar os `set-state-in-effect`).
+
+> ⚠️ A validação de código exige a tabela `codigos` — ela está incluída no
+> [docs/supabase.sql](./supabase.sql) (rode o arquivo atualizado).
+
 ---
 
 ## Limitações conhecidas (estado atual)
-- **As tabelas + RLS precisam existir:** rode [docs/supabase.sql](./supabase.sql) no Supabase.
-  Sem o RLS de leitura, o painel do admin não carrega os dados.
+- **As tabelas + RLS precisam existir:** rode [docs/supabase.sql](./supabase.sql) no Supabase
+  (inclui `sessao`, `resultado_jogo` e `codigos` + políticas). Sem o RLS de leitura, o painel
+  do admin não carrega; sem a tabela `codigos`, a validação fica em fail-open (aceita qualquer).
 - **Usuário admin precisa ser criado** no Supabase (Authentication → Users, com Auto Confirm).
-- **CSV é separado** (`sessoes.csv` + `resultados.csv`); versão achatada (1 linha/participante)
-  pode ser adicionada se necessário para a análise.
+- **Fluxo de coleta**: o admin gera os códigos no painel e distribui; o mesmo código é usado
+  no Bartle externo e no app (cruzamento por `codigo` na planilha).
 - Lint aponta 2 itens `set-state-in-effect` no [Explorador.jsx](../src/Explorador.jsx) (estruturais,
   da forma como o jogo foi escrito) — não quebram nada; eventual refatoração futura.
 

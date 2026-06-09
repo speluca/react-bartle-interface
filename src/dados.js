@@ -126,6 +126,57 @@ export async function buscarResultados() {
   return data || [];
 }
 
+// ---- Códigos de participação (Opção 1: pré-gerados pelo admin) ----
+
+// valida se o código existe na lista. Se a tabela não existir / sem permissão,
+// não bloqueia (fail-open) para não travar antes da configuração.
+export async function validarCodigo(codigo) {
+  const { data, error } = await supabase
+    .from("codigos")
+    .select("codigo")
+    .eq("codigo", codigo)
+    .maybeSingle();
+  if (error) {
+    console.warn("[codigos] validação indisponível:", error.message);
+    return true;
+  }
+  return !!data;
+}
+
+// marca o código como usado (informativo; não bloqueia o fluxo)
+export function marcarCodigoUsado(codigo) {
+  supabase
+    .from("codigos")
+    .update({ usado: true })
+    .eq("codigo", codigo)
+    .then(({ error }) => {
+      if (error) console.warn("[codigos] não marcou usado:", error.message);
+    });
+}
+
+function novoCodigo() {
+  return `TCC-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+// gera um lote de códigos únicos e insere na tabela (admin)
+export async function gerarCodigos(qtd) {
+  const conjunto = new Set();
+  while (conjunto.size < qtd) conjunto.add(novoCodigo());
+  const linhas = [...conjunto].map((codigo) => ({ codigo }));
+  const { error } = await supabase.from("codigos").insert(linhas);
+  if (error) throw error;
+  return [...conjunto];
+}
+
+export async function buscarCodigos() {
+  const { data, error } = await supabase
+    .from("codigos")
+    .select("*")
+    .order("criado_em", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
 // ---- CSV ----
 
 function valorCSV(v) {
@@ -147,4 +198,47 @@ export function gerarCSV(linhas) {
     .map((l) => colunas.map((c) => valorCSV(l[c])).join(","))
     .join("\n");
   return `${cabecalho}\n${corpo}`;
+}
+
+// CSV "achatado": 1 linha por participante, com demográfico e métricas
+// de cada jogo viradas em colunas (mais direto para análise estatística).
+export function gerarCSVAchatado(sessoes, resultados) {
+  const porCodigo = {};
+  resultados.forEach((r) => {
+    porCodigo[r.codigo] = porCodigo[r.codigo] || {};
+    porCodigo[r.codigo][r.jogo] = r.metricas || {};
+  });
+
+  const linhas = sessoes.map((s) => {
+    const linha = {
+      codigo: s.codigo,
+      criado_em: s.criado_em,
+      consentiu: s.consentiu,
+      pre_score: s.pre_score,
+      pos_score: s.pos_score,
+      ganho:
+        s.pre_score != null && s.pos_score != null
+          ? s.pos_score - s.pre_score
+          : null,
+      concluido: s.concluido,
+      ordem_jogos: s.ordem_jogos
+    };
+
+    if (s.demografico) {
+      Object.entries(s.demografico).forEach(([k, v]) => {
+        linha[`demo_${k}`] = v;
+      });
+    }
+
+    const jogos = porCodigo[s.codigo] || {};
+    Object.entries(jogos).forEach(([jogo, metricas]) => {
+      Object.entries(metricas).forEach(([k, v]) => {
+        linha[`${jogo}_${k}`] = v;
+      });
+    });
+
+    return linha;
+  });
+
+  return gerarCSV(linhas);
 }

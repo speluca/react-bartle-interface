@@ -1,13 +1,30 @@
 import React, { useState, useEffect, useRef } from "react";
 import ResultadoJogo from "./ResultadoJogo";
 
+const RELIQUIAS_RARAS = [
+  "💾 Disquete Antigo",
+  "🖥️ Núcleo de Processamento",
+  "📟 Terminal Perdido"
+];
+
+function agora() {
+  return Date.now();
+}
+
+// 50% de chance de encontrar uma relíquia rara ainda não obtida
+function talvezReliquiaRara(jaPossui) {
+  if (Math.random() >= 0.5) return null;
+  const disponiveis = RELIQUIAS_RARAS.filter((r) => !jaPossui.includes(r));
+  if (disponiveis.length === 0) return null;
+  return disponiveis[Math.floor(Math.random() * disponiveis.length)];
+}
+
 function Explorador({ voltar, aoConcluir, modoEstudo }) {
 
   const [regiaoAtual, setRegiaoAtual] = useState(1);
   const [desbloqueadas, setDesbloqueadas] = useState([1]);
 
-  const [quantidade, setQuantidade] = useState(4);
-  const [partes, setPartes] = useState(Array(4).fill(false));
+  const [partes, setPartes] = useState([false, false]); // região 1 = 2 bits
 
   const [mensagem, setMensagem] = useState("");
   const [animandoMapa, setAnimandoMapa] = useState(false);
@@ -61,165 +78,90 @@ function Explorador({ voltar, aoConcluir, modoEstudo }) {
   2: "🖥️ Núcleo de Processamento",
   3: "⚙️ Chave da Conversão"
 };
-  const reliquiasRaras = [
-  "💾 Disquete Antigo",
-  "🖥️ Núcleo de Processamento",
-  "📟 Terminal Perdido"
-];
+  // nº de bits da região atual (derivado do estado, sem effect)
+  const quantidade = partes.length;
 
-  // quantidade de peças por região
+  // inicia o cronômetro da primeira área (apenas na montagem)
   useEffect(() => {
+    inicioRegiaoRef.current = agora();
+  }, []);
 
-        let qtd = 2;
-
-    if (regiaoAtual === 2) qtd = 3;
-    if (regiaoAtual === 3) qtd = 4;
-
-    setQuantidade(qtd);
-    setPartes(Array(qtd).fill(false));
-
-    // marca o início do tempo desta área e zera o controle de overshoot
-    inicioRegiaoRef.current = Date.now();
-    acimaRef.current = false;
-
-  }, [regiaoAtual]);
-
-  // lógica principal
-  useEffect(() => {
-
-  const binarioAtual = partes
-    .map(p => (p ? "1" : "0"))
-    .join("");
-
-  const decimalAtual = partes.reduce(
-    (soma, ativa, index) =>
-      ativa
-        ? soma + pesos[regiaoAtual][index]
-        : soma,
-    0
-  );
-
-  setMensagem(
-    `💻 ${binarioAtual}₂ = ${decimalAtual}`
-  );
-
-  // conta "passou do alvo" uma vez por vez que ultrapassa o objetivo
-  if (decimalAtual > objetivos[regiaoAtual]) {
-    if (!acimaRef.current) {
-      acimaRef.current = true;
-      setErros(e => e + 1);
-    }
-  } else {
+  // troca de região: reseta bits, mensagem, cronômetro e controle de overshoot
+  function irParaRegiao(r) {
+    setRegiaoAtual(r);
+    setPartes(Array(pesos[r].length).fill(false));
+    setMensagem("");
+    inicioRegiaoRef.current = agora();
     acimaRef.current = false;
   }
 
-  if (decimalAtual === objetivos[regiaoAtual]) {
-
-    setMensagem(
-      `✅ Correto! ${binarioAtual}₂ = ${decimalAtual}`
+  // avalia os bits montados (chamado ao clicar em um bit)
+  function avaliar(parts) {
+    const binarioAtual = parts.map((p) => (p ? "1" : "0")).join("");
+    const decimalAtual = parts.reduce(
+      (soma, ativa, index) =>
+        ativa ? soma + pesos[regiaoAtual][index] : soma,
+      0
     );
 
-    // registra o tempo gasto nesta área
-    const tempoArea = (Date.now() - inicioRegiaoRef.current) / 1000;
-    setTemposPorArea(prev => [
-      ...prev,
-      { regiao: regiaoAtual, tempo: tempoArea }
-    ]);
+    setMensagem(`💻 ${binarioAtual}₂ = ${decimalAtual}`);
 
-    if (
-      !descobertas.includes(
-        `${binarioAtual}₂ = ${decimalAtual}`
-      )
-    ) {
-      setDescobertas(prev => [
-        ...prev,
-        `${binarioAtual}₂ = ${decimalAtual}`
-      ]);
+    // conta "passou do alvo" uma vez por ultrapassagem
+    if (decimalAtual > objetivos[regiaoAtual]) {
+      if (!acimaRef.current) {
+        acimaRef.current = true;
+        setErros((e) => e + 1);
+      }
+    } else {
+      acimaRef.current = false;
+    }
+
+    if (decimalAtual !== objetivos[regiaoAtual]) return;
+
+    setMensagem(`✅ Correto! ${binarioAtual}₂ = ${decimalAtual}`);
+
+    const tempoArea = (agora() - inicioRegiaoRef.current) / 1000;
+    setTemposPorArea((prev) => [...prev, { regiao: regiaoAtual, tempo: tempoArea }]);
+
+    const descoberta = `${binarioAtual}₂ = ${decimalAtual}`;
+    if (!descobertas.includes(descoberta)) {
+      setDescobertas((prev) => [...prev, descoberta]);
     }
 
     if (!reliquias.includes(nomesReliquias[regiaoAtual])) {
-
-      setReliquias(prev => [
-        ...prev,
-        nomesReliquias[regiaoAtual]
-      ]);
-
+      setReliquias((prev) => [...prev, nomesReliquias[regiaoAtual]]);
     }
 
-    if (Math.random() < 0.5) {
-
-  const reliquiasDisponiveis =
-    reliquiasRaras.filter(
-      r => !reliquias.includes(r)
-    );
-
-  if (reliquiasDisponiveis.length > 0) {
-
-    const bonus =
-      reliquiasDisponiveis[
-        Math.floor(
-          Math.random() *
-          reliquiasDisponiveis.length
-        )
-      ];
-
-    setReliquias(prev => [
-      ...prev,
-      bonus
-    ]);
-
-    setMensagem(
-      `🎁 Você encontrou uma relíquia rara: ${bonus}`
-    );
-
-  }
-
-}
+    const bonus = talvezReliquiaRara(reliquias);
+    if (bonus) {
+      setReliquias((prev) => [...prev, bonus]);
+      setMensagem(`🎁 Você encontrou uma relíquia rara: ${bonus}`);
+    }
 
     setAnimandoMapa(true);
-
+    const regiaoConcluida = regiaoAtual;
     setTimeout(() => {
-
-      if (regiaoAtual < 3) {
-
-        const proxima = regiaoAtual + 1;
-
-        setDesbloqueadas(prev => {
-
-          if (!prev.includes(proxima)) {
-            return [...prev, proxima];
-          }
-
-          return prev;
-
-        });
-
-        setRegiaoAtual(proxima);
-
+      if (regiaoConcluida < 3) {
+        const proxima = regiaoConcluida + 1;
+        setDesbloqueadas((prev) =>
+          prev.includes(proxima) ? prev : [...prev, proxima]
+        );
+        irParaRegiao(proxima);
       } else {
-
         setJogoFinalizado(true);
-
       }
-
       setAnimandoMapa(false);
-
     }, 1200);
   }
 
-}, [partes]);
-  //aqui
   function toggleParte(index) {
-
     // bloqueia interação durante a transição de região (evita avanço duplo)
     if (animandoMapa) return;
 
     const novo = [...partes];
-
     novo[index] = !novo[index];
-
     setPartes(novo);
-
+    avaliar(novo);
   }
 
   function temaRegiao() {
@@ -481,11 +423,9 @@ function Explorador({ voltar, aoConcluir, modoEstudo }) {
         <div
           key={regiao}
           onClick={() => {
-
-            if (desbloqueada) {
-              setRegiaoAtual(regiao);
+            if (desbloqueada && !animandoMapa) {
+              irParaRegiao(regiao);
             }
-
           }}
           style={{
             padding: "12px",

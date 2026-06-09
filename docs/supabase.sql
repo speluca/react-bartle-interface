@@ -27,6 +27,13 @@ create table if not exists resultado_jogo (
   criado_em timestamptz default now()
 );
 
+-- 3) Códigos de participação (pré-gerados pelo admin; Opção 1)
+create table if not exists codigos (
+  codigo    text primary key,
+  criado_em timestamptz default now(),
+  usado     boolean default false
+);
+
 -- ============================================================
 --  Segurança (RLS) — Etapa 4 (versão final)
 --  Participante (anônimo): só INSERE/ATUALIZA — NÃO consegue LER.
@@ -61,6 +68,21 @@ create policy "admin le sessao"
   on sessao for select to authenticated using (true);
 create policy "admin le resultado"
   on resultado_jogo for select to authenticated using (true);
+
+-- códigos: participante valida (select) e marca usado (update);
+-- admin gera (insert). Códigos não são dado sensível (são distribuídos).
+alter table codigos enable row level security;
+
+drop policy if exists "valida codigo"  on codigos;
+drop policy if exists "marca usado"    on codigos;
+drop policy if exists "admin gera codigo" on codigos;
+
+create policy "valida codigo"
+  on codigos for select to anon, authenticated using (true);
+create policy "marca usado"
+  on codigos for update to anon, authenticated using (true) with check (true);
+create policy "admin gera codigo"
+  on codigos for insert to authenticated with check (true);
 
 -- conferência: deve listar as 5 políticas acima
 -- select tablename, policyname, cmd, roles from pg_policies
