@@ -25,7 +25,7 @@ import TutorialJogo from "./TutorialJogo";
 import { botaoSecundario } from "./estilos";
 
 // jogos do estudo — a ordem é embaralhada por participante
-const JOGOS = ["quiz", "infinito", "explorador", "construtor"];
+const JOGOS = ["infinito", "explorador", "construtor"];
 
 function embaralhar(arr) {
   const c = [...arr];
