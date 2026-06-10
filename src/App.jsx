@@ -20,6 +20,8 @@ import Demografico from "./Demografico";
 import TesteBinario from "./TesteBinario";
 import Transicao from "./Transicao";
 import Encerramento from "./Encerramento";
+import AvaliacaoIMMS from "./AvaliacaoIMMS";
+import TutorialJogo from "./TutorialJogo";
 import { botaoSecundario } from "./estilos";
 
 // jogos do estudo — a ordem é embaralhada por participante
@@ -145,25 +147,28 @@ function App() {
     registrarJogo(sessao.codigo, jogo, metricas);
     if (indiceJogo < sessao.ordemJogos.length - 1) {
       setIndiceJogo((i) => i + 1);
+      setEtapa("tutorialJogo");
     } else {
       setEtapa("posTeste");
     }
   }
 
   function concluirPosTeste(score, respostas) {
-    const final = {
-      ...sessao,
-      posScore: score,
-      posRespostas: respostas,
-      concluido: true
-    };
-    setSessao(final);
+    setSessao((s) => ({ ...s, posScore: score, posRespostas: respostas }));
     atualizarSessao(sessao.codigo, {
       pos_score: score,
-      pos_respostas: respostas,
+      pos_respostas: respostas
+    });
+    setEtapa("avaliacao");
+  }
+
+  function concluirAvaliacao(dados) {
+    const final = { ...sessao, concluido: true };
+    setSessao(final);
+    atualizarSessao(sessao.codigo, {
+      avaliacao: dados,
       concluido: true
     });
-    console.log("Sessão concluída:", final);
     setEtapa("fim");
   }
 
@@ -227,7 +232,11 @@ function App() {
       );
     }
     if (etapa === "transicao") {
-      return <Transicao onContinuar={() => setEtapa("jogos")} />;
+      return <Transicao onContinuar={() => setEtapa("tutorialJogo")} />;
+    }
+    if (etapa === "tutorialJogo") {
+      const jogo = sessao.ordemJogos[indiceJogo];
+      return <TutorialJogo jogo={jogo} onJogar={() => setEtapa("jogos")} />;
     }
     if (etapa === "jogos") {
       const jogo = sessao.ordemJogos[indiceJogo];
@@ -245,6 +254,9 @@ function App() {
           onConcluir={concluirPosTeste}
         />
       );
+    }
+    if (etapa === "avaliacao") {
+      return <AvaliacaoIMMS onConcluir={concluirAvaliacao} />;
     }
     if (etapa === "fim") {
       return <Encerramento onSair={voltarAoInicio} />;

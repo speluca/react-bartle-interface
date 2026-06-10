@@ -29,11 +29,13 @@ async function aplicar(op) {
     // 23505 = código duplicado (sessão já existe, ex.: reteste) → trata como OK
     if (error && error.code !== "23505") throw error;
   } else if (op.tipo === "atualizarSessao") {
-    const { error } = await supabase
+    const { count, error } = await supabase
       .from("sessao")
       .update(op.dados)
-      .eq("codigo", op.codigo);
+      .eq("codigo", op.codigo)
+      .select("id", { count: "exact", head: true });
     if (error) throw error;
+    if (count === 0) console.error("[dados] UPDATE não afetou nenhuma linha — código:", op.codigo);
   } else if (op.tipo === "registrarJogo") {
     const { error } = await supabase.from("resultado_jogo").insert(op.dados);
     if (error) throw error;

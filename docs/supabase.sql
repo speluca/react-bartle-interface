@@ -15,8 +15,12 @@ create table if not exists sessao (
   pos_score     int,                            -- acertos no pós-teste
   pos_respostas jsonb,
   ordem_jogos   jsonb,                          -- ordem aleatória sorteada
+  avaliacao     jsonb,                          -- avaliação IMMS + preferência de jogos
   concluido     boolean default false
 );
+
+-- adiciona coluna avaliacao se a tabela já existia sem ela
+alter table sessao add column if not exists avaliacao jsonb;
 
 -- 2) Resultado por jogo (1 linha por jogo jogado)
 create table if not exists resultado_jogo (
@@ -35,46 +39,62 @@ create table if not exists codigos (
 );
 
 -- ============================================================
---  Segurança (RLS) — Etapa 4 (versão final)
---  Participante (anônimo): só INSERE/ATUALIZA — NÃO consegue LER.
---  Admin (autenticado): consegue LER (SELECT) tudo.
+--  Segurança (RLS)
 --
---  Rode este bloco inteiro. É idempotente (pode rodar de novo sem erro).
+--  IMPORTANTE: o PostgREST (Supabase REST API) precisa de uma
+--  política SELECT para o papel anon conseguir encontrar a linha
+--  antes de executar UPDATE. Sem ela, .update().eq(...) não acha
+--  nenhuma linha e retorna 0 rows affected — silenciosamente.
+--
+--  Os dados da sessão já são anônimos (sem nome, e-mail etc.),
+--  então expor SELECT para anon não representa risco real.
+--
+--  Rode este bloco inteiro. É idempotente (pode rodar de novo).
 -- ============================================================
 
-alter table sessao        enable row level security;
+alter table sessao         enable row level security;
 alter table resultado_jogo enable row level security;
 
 -- limpa políticas antigas (evita conflito ao re-rodar)
 drop policy if exists "anon insere sessao"    on sessao;
+drop policy if exists "anon le sessao"        on sessao;
 drop policy if exists "anon atualiza sessao"  on sessao;
 drop policy if exists "admin le sessao"       on sessao;
 drop policy if exists "anon insere resultado" on resultado_jogo;
+drop policy if exists "anon le resultado"     on resultado_jogo;
 drop policy if exists "admin le resultado"    on resultado_jogo;
 
--- participante: cria e atualiza a própria sessão
--- (anon + authenticated para funcionar mesmo se um admin estiver logado no navegador)
+-- participante: cria, lê e atualiza sessão
+-- (anon + authenticated para funcionar mesmo se um admin estiver logado)
 create policy "anon insere sessao"
   on sessao for insert to anon, authenticated with check (true);
+
+-- SELECT necessário: PostgREST filtra via SELECT antes de fazer UPDATE
+create policy "anon le sessao"
+  on sessao for select to anon, authenticated using (true);
+
 create policy "anon atualiza sessao"
   on sessao for update to anon, authenticated using (true) with check (true);
 
--- participante: insere resultados de jogo
+-- participante: insere e lê resultados de jogo
 create policy "anon insere resultado"
   on resultado_jogo for insert to anon, authenticated with check (true);
+create policy "anon le resultado"
+  on resultado_jogo for select to anon, authenticated using (true);
 
 -- admin autenticado: leitura dos dados (para o painel / export)
+-- (as políticas anon acima já cobrem authenticated, mas deixamos explícito)
 create policy "admin le sessao"
   on sessao for select to authenticated using (true);
 create policy "admin le resultado"
   on resultado_jogo for select to authenticated using (true);
 
 -- códigos: participante valida (select) e marca usado (update);
--- admin gera (insert). Códigos não são dado sensível (são distribuídos).
+-- admin gera (insert). Códigos não são dado sensível.
 alter table codigos enable row level security;
 
-drop policy if exists "valida codigo"  on codigos;
-drop policy if exists "marca usado"    on codigos;
+drop policy if exists "valida codigo"     on codigos;
+drop policy if exists "marca usado"       on codigos;
 drop policy if exists "admin gera codigo" on codigos;
 
 create policy "valida codigo"
@@ -84,6 +104,6 @@ create policy "marca usado"
 create policy "admin gera codigo"
   on codigos for insert to authenticated with check (true);
 
--- conferência: deve listar as 5 políticas acima
+-- conferência: deve listar as políticas acima
 -- select tablename, policyname, cmd, roles from pg_policies
--- where tablename in ('sessao','resultado_jogo') order by tablename;
+-- where tablename in ('sessao','resultado_jogo','codigos') order by tablename, cmd;
