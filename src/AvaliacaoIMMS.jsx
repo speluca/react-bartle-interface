@@ -17,7 +17,6 @@ const QUESTOES_IMMS = [
 ];
 
 const JOGOS = [
-  { id: "quiz", nome: "Quiz Hacker", emoji: "🕵️" },
   { id: "infinito", nome: "Torre da Transmissão", emoji: "📡" },
   { id: "explorador", nome: "Ruínas Binárias", emoji: "🧭" },
   { id: "construtor", nome: "Forja Digital", emoji: "🔥" },

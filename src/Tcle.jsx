@@ -14,14 +14,14 @@ function Tcle({ onAceitar, onRecusar }) {
       <div style={{ fontSize: "0.95rem", lineHeight: 1.6, opacity: 0.9 }}>
         <p>
           Você está sendo convidado(a) a participar da pesquisa{" "}
-          <strong>"[título]"</strong>, conduzida por <strong>[pesquisador]</strong>,
-          da <strong>[instituição]</strong>, que investiga como diferentes estilos
-          de jogo influenciam o aprendizado do sistema binário.
+          <strong>"Além da Gamificação Padronizada: Desenvolvimento de Cenários Educacionais Personalizados segundo Perfis de Bartle"</strong>,
+          conduzida por <strong>Pedro Lucas</strong>, da <strong>Universidade do Estado do Rio Grande do Norte (UERN)</strong>,
+          que investiga como diferentes estilos de jogo influenciam o aprendizado do sistema binário.
         </p>
         <p>
           <strong>O que você fará:</strong> responder a um questionário inicial
-          (dados demográficos e conhecimento sobre binário), jogar e, ao final,
-          responder a um questionário rápido. Tempo estimado: <strong>[~X min]</strong>.
+          (dados demográficos e conhecimento sobre binário), jogar três jogos educacionais e, ao final,
+          responder a um questionário rápido. Tempo estimado: <strong>~15 minutos</strong>.
         </p>
         <p>
           <strong>Anonimato:</strong> a participação é <strong>anônima</strong>. Não
@@ -38,7 +38,7 @@ function Tcle({ onAceitar, onRecusar }) {
           contribuir para pesquisas em educação e gamificação.
         </p>
         <p>
-          <strong>Contato:</strong> [e-mail do pesquisador].
+          <strong>Contato:</strong> pedrochagas@alu.uern.br
         </p>
       </div>
 
